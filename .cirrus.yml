@@ -1,0 +1,36 @@
+BUILD_TEST_TASK_TEMPLATE: &BUILD_TEST_TASK_TEMPLATE
+  arch_check_script: |
+      uname -m
+  ffi_download_script: |
+      chmod +x build/download-native-libs.sh
+      build/download-native-libs.sh
+  restore_script: |
+      dotnet restore
+  build_script: |
+      dotnet build --no-restore
+  test_script: |
+      dotnet test --no-build --verbosity normal
+  pack_script: |
+      dotnet pack --verbosity normal -c Release --no-restore --include-source --version-suffix alpha.123 -o ./dist
+
+linux_arm64_task: 
+  arm_container:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+  << : *BUILD_TEST_TASK_TEMPLATE
+
+linux_amd64_task: 
+  container:
+    image: mcr.microsoft.com/dotnet/sdk:8.0
+  << : *BUILD_TEST_TASK_TEMPLATE
+
+linux_arm64_alpine_task: 
+  arm_container:
+    image: mcr.microsoft.com/dotnet/sdk:8.0-alpine
+  setup_alpine_script: apk add --no-cache curl bash gzip
+  << : *BUILD_TEST_TASK_TEMPLATE
+
+linux_amd64_alpine_task: 
+  container:
+    image: mcr.microsoft.com/dotnet/sdk:8.0-alpine
+  setup_alpine_script: apk add --no-cache curl bash gzip
+  << : *BUILD_TEST_TASK_TEMPLATE
