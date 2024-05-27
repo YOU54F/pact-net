@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FFI_VERSION="0.4.18"
+FFI_VERSION="0.4.22"
 FFI_BASE_URL="https://github.com/you54f/pact-reference/releases/download/libpact_ffi-v$FFI_VERSION"
 
 GREEN="\e[32m"

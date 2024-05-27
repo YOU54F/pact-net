@@ -26,10 +26,17 @@ jobs:
             os: macos-14
           - os: ubuntu-latest
             alpine: true
-            arch: x86_64
+            arch: x64
+          - os: ubuntu-latest
+            debian: true
+            arch: x64
           # - os: ubuntu-latest
           #   alpine: true
-          #   arch: aarch64
+          #   arch: ARM64
+          ##  Skipped as .NET does not work with QEMU https://github.com/dotnet/core/blob/main/release-notes/8.0/supported-os.md#qemu
+          # - os: ubuntu-latest
+          #   debian: true
+          #   arch: ARM64
           ##  Skipped as .NET does not work with QEMU https://github.com/dotnet/core/blob/main/release-notes/8.0/supported-os.md#qemu
 
     runs-on: ${{ matrix.os }}
@@ -53,11 +60,8 @@ jobs:
             build/windows
 
       - name: Set up QEMU
-        if: matrix.alpine == true
+        if: matrix.alpine == true && matrix.arch == 'x86_64'
         uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        if: matrix.alpine == true
-        uses: docker/setup-buildx-action@v3
       - name: Pull interop dependencies
         if: matrix.alpine != true && ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: bash -c "build/download-native-libs.sh"
@@ -75,15 +79,25 @@ jobs:
         run: dotnet test --no-build --verbosity normal
 
       - name: test linux amd64 musl
-        if: matrix.alpine == true && matrix.arch == 'x86_64'
+        if: matrix.alpine == true && matrix.arch == 'x64'
         run: |
           docker run --platform=linux/amd64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0-alpine /bin/sh -c 'apk add --no-cache curl bash gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
+      - name: test linux amd64 musl
+        if: matrix.debian == true && matrix.arch == 'x64'
+        run: |
+          docker run --platform=linux/amd64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash -c 'apt-get update && apt-get install --yes curl gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
 
       ## Skipped as .NET does not work with QEMU https://github.com/dotnet/core/blob/main/release-notes/8.0/supported-os.md#qemu 
       # - name: test linux arm64 musl
-      #   if: matrix.alpine == true && matrix.arch == 'aarch64'
+      #   if: matrix.alpine == true && matrix.arch == 'ARM64'
       #   run: |
       #       docker run --platform=linux/arm64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0-alpine /bin/sh -c 'apk add --no-cache curl bash gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
+      
+      ## Skipped as .NET does not work with QEMU https://github.com/dotnet/core/blob/main/release-notes/8.0/supported-os.md#qemu 
+      # - name: test linux arm64 musl
+      #   if: matrix.debian == true && matrix.arch == 'ARM64'
+      #   run: |
+      #    docker run --platform=linux/arm64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash -c 'apt-get update && apt-get install --yes curl gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
       
       - name: Pack
         if: matrix.os == 'windows-latest'
