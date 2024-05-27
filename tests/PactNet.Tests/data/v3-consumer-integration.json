@@ -132,8 +132,8 @@
   ],
   "metadata": {
     "pactRust": {
-      "ffi": "0.4.18",
-      "models": "1.1.19"
+      "ffi": "0.4.21",
+      "models": "1.2.0"
     },
     "pactSpecification": {
       "version": "3.0.0"
