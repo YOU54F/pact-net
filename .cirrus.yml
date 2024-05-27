@@ -26,11 +26,11 @@ linux_amd64_task:
 linux_arm64_alpine_task: 
   arm_container:
     image: mcr.microsoft.com/dotnet/sdk:8.0-alpine
-  setup_alpine_script: apk add --no-cache curl bash gzip
+  setup_alpine_script: apk add curl bash gzip
   << : *BUILD_TEST_TASK_TEMPLATE
 
 linux_amd64_alpine_task: 
   container:
     image: mcr.microsoft.com/dotnet/sdk:8.0-alpine
-  setup_alpine_script: apk add --no-cache curl bash gzip
+  setup_alpine_script: apk add curl bash gzip
   << : *BUILD_TEST_TASK_TEMPLATE
