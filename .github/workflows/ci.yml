@@ -10,7 +10,7 @@ env:
 
 jobs:
   build-dotnet:
-    name: Build and Test (dotnet) ${{ matrix.alpine == true && 'linux-musl' || matrix.alpine == false && 'linux' || matrix.os }}-${{ matrix.arch }}-node-${{ matrix.arch }}
+    name: ${{ matrix.alpine == true && 'linux-musl' || matrix.alpine == false && 'linux' || matrix.os }}-${{ matrix.arch }}-dotnet-build-test
     strategy:
       fail-fast: false
       matrix:
