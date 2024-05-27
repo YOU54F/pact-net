@@ -42,10 +42,10 @@ download_native() {
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # OSX requires an empty arg passed to -i, but this doesn't work on Lin/Win
-        sed -Ei '' "s|../release_artifacts/.+$|$path/$dest_file|" "$path/$dest_file.sha256"
+        sed -Ei '' "s|\*(.*)$|\*$path/$dest_file|" "$path/$dest_file.sha256"
         shasum -a 256 --check --quiet "$path/$dest_file.sha256"
     else
-        sed -Ei "s|../release_artifacts/.+$|$path/$dest_file|" "$path/$dest_file.sha256"
+        sed -Ei "s|\*(.*)$|\*$path/$dest_file|" "$path/$dest_file.sha256"
         if [[ "$OSTYPE" == "linux"* ]]; then
             if ldd /bin/ls >/dev/null 2>&1; then
                 ldd_output=$(ldd /bin/ls)
