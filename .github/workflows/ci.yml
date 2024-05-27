@@ -64,27 +64,27 @@ jobs:
         if: matrix.alpine == true && matrix.arch == 'ARM64'
         uses: docker/setup-qemu-action@v3
       - name: Pull interop dependencies
-        if: matrix.alpine != true && ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ matrix.alpine != true || matrix.debian != true }}|| && ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: bash -c "build/download-native-libs.sh"
 
       - name: Restore
-        if: matrix.alpine != true || matrix.debian != true
+        if: ${{ matrix.alpine != true || matrix.debian != true }}
         run: dotnet restore
 
       - name: Build
-        if: matrix.alpine != true || matrix.debian != true
+        if: ${{ matrix.alpine != true || matrix.debian != true }}
         run: dotnet build --no-restore
 
       - name: Test
-        if: matrix.alpine != true || matrix.debian != true
+        if: ${{ matrix.alpine != true || matrix.debian != true }}
         run: dotnet test --no-build --verbosity normal
 
       - name: test linux amd64 musl
-        if: matrix.alpine == true && matrix.arch == 'x64'
+        if: ${{ matrix.alpine == true && matrix.arch == 'x64' }}
         run: |
           docker run --platform=linux/amd64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0-alpine /bin/sh -c 'apk add --no-cache curl bash gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
       - name: test linux amd64 debian
-        if: matrix.debian == true && matrix.arch == 'x64'
+        if: ${{ matrix.debian == true && matrix.arch == 'x64' }}
         run: |
           docker run --platform=linux/amd64 --rm -v $PWD:/app mcr.microsoft.com/dotnet/sdk:8.0 /bin/bash -c 'apt-get update && apt-get install --yes curl gzip && cd /app && build/download-native-libs.sh && dotnet restore && dotnet build --no-restore && dotnet test --no-build --verbosity normal'
 
