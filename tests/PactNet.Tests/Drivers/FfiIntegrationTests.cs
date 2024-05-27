@@ -29,12 +29,9 @@ namespace PactNet.Tests.Drivers
             NativeInterop.LogToBuffer(LevelFilter.Trace);
         }
 
-        [SkippableFact]
+        [Fact]
         public async Task HttpInteraction_v3_CreatesPactFile_WithMultiPartRequest()
         {
-            // Feature not supported on Windows
-            Skip.If(RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
-
             var driver = new PactDriver();
 
             try
