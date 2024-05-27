@@ -64,19 +64,19 @@ jobs:
         if: matrix.alpine == true && matrix.arch == 'ARM64'
         uses: docker/setup-qemu-action@v3
       - name: Pull interop dependencies
-        if: ${{ matrix.alpine != true || matrix.debian != true }} && ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.cache.outputs.cache-hit != 'true' && matrix.alpine != true && matrix.debian != true }}
         run: bash -c "build/download-native-libs.sh"
 
       - name: Restore
-        if: ${{ matrix.alpine != true || matrix.debian != true }}
+        if: ${{ matrix.alpine != true && matrix.debian != true }}
         run: dotnet restore
 
       - name: Build
-        if: ${{ matrix.alpine != true || matrix.debian != true }}
+        if: ${{ matrix.alpine != true && matrix.debian != true }}
         run: dotnet build --no-restore
 
       - name: Test
-        if: ${{ matrix.alpine != true || matrix.debian != true }}
+        if: ${{ matrix.alpine != true && matrix.debian != true }}
         run: dotnet test --no-build --verbosity normal
 
       - name: test linux amd64 musl
