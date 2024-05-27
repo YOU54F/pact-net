@@ -14,7 +14,6 @@ namespace Provider.Tests
     public class EventApiTests : IClassFixture<EventApiFixture>
     {
         private readonly EventApiFixture fixture;
-        private readonly ITestOutputHelper output;
         private readonly PactVerifier verifier;
         private static readonly Uri ProviderUri = new("http://localhost:9222");
 
