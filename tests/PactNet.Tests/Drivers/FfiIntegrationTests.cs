@@ -7,7 +7,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using PactNet.Drivers;
 using PactNet.Interop;
 using Xunit;
@@ -30,13 +32,13 @@ namespace PactNet.Tests.Drivers
         }
 
         [Fact]
-        public async Task HttpInteraction_v3_CreatesPactFile_WithMultiPartRequest()
+        public async Task HttpInteraction_v4_CreatesPactFile_WithMultiPartRequest()
         {
             var driver = new PactDriver();
 
             try
             {
-                IHttpPactDriver pact = driver.NewHttpPact("NativeDriverTests-Consumer-V3",
+                IHttpPactDriver pact = driver.NewHttpPact("NativeDriverTests-Consumer-V4",
                                                           "NativeDriverTests-Provider-Multipart",
                                                           PactSpecification.V4);
 
@@ -103,28 +105,23 @@ namespace PactNet.Tests.Drivers
             {
                 this.WriteDriverLogs(driver);
             }
-            // The body and boundry will be different, so test the header and matching rules are multipart/form-data
-            var file = new FileInfo("NativeDriverTests-Consumer-V3-NativeDriverTests-Provider-Multipart.json");
+            // The body and boundary will be different, so test the header and matching rules are multipart/form-data
+            var file = new FileInfo("NativeDriverTests-Consumer-V4-NativeDriverTests-Provider-Multipart.json");
             file.Exists.Should().BeTrue();
 
             string pactContents = File.ReadAllText(file.FullName).TrimEnd();
-            JObject pactObject = JObject.Parse(pactContents);
+            string expectedPactContents = File.ReadAllText("data/v4-server-integration-MultipartFormDataBody.json").TrimEnd();
 
-            string expectedPactContent = File.ReadAllText("data/v3-server-integration-MultipartFormDataBody.json").TrimEnd();
-            JObject expectedPactObject = JObject.Parse(pactContents);
-
+            var pactObject = JsonSerializer.Deserialize<JsonNode>(pactContents).AsObject();
+            var expectedPactObject = JsonSerializer.Deserialize<JsonNode>(expectedPactContents).AsObject();
 
             string contentTypeHeader = (string)pactObject["interactions"][0]["request"]["headers"]["Content-Type"][0];
             Assert.Contains("multipart/form-data;", contentTypeHeader);
 
-
-            JArray integrationsArray = (JArray)pactObject["interactions"];
-            JToken matchingRules = integrationsArray.First["request"]["matchingRules"];
-
-            JArray expecteIntegrationsArray = (JArray)expectedPactObject["interactions"];
-            JToken expectedMatchingRules = expecteIntegrationsArray.First["request"]["matchingRules"];
-
-            Assert.True(JToken.DeepEquals(matchingRules, expectedMatchingRules));              
+            dynamic matchingRules = pactObject["interactions"][0]["request"]["matchingRules"].AsObject();
+            dynamic expectedMatchingRules = expectedPactObject["interactions"][0]["request"]["matchingRules"].AsObject();
+            Assert.Equal(matchingRules.ToString(), expectedMatchingRules.ToString());
+            Assert.True(JsonNode.DeepEquals(matchingRules, expectedMatchingRules));      
         }
 
         [Fact]
