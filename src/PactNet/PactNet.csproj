@@ -23,8 +23,8 @@
     <IsLinuxArm64 Condition="'$(IsLinux)' == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxArm64>
     <IsLinuxMuslX64LibFound Condition="$([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'True'">True</IsLinuxMuslX64LibFound>
     <IsLinuxMuslArm64LibFound Condition="$([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True'">True</IsLinuxMuslArm64LibFound>
-    <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslX64LibFound) == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
-    <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslArm64LibFound) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64>
+    <!-- <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslX64LibFound) == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
+    <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslArm64LibFound) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64> -->
 
     <!-- Testing -->
     <IsLinuxMuslLoaded><Exec Command="ldd /bin/sh | grep musl"/>True</IsLinuxMuslLoaded>
