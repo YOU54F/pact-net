@@ -27,7 +27,7 @@
     <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslArm64LibFound) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64> -->
 
     <!-- Testing -->
-    <IsLinuxMuslLoaded><Exec Command="ldd /bin/sh | grep musl"/>True</IsLinuxMuslLoaded>
+    <IsLinuxMuslLoaded><Exec Command="/usr/bin/ldd /bin/sh | grep musl"/>True</IsLinuxMuslLoaded>
     <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslLoaded) == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
     <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslLoaded) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64>
 
