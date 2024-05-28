@@ -23,7 +23,7 @@
     <IsLinuxMuslX64 Condition="'$(IsLinuxX64)' == 'True' And '$(IsMuslLibFound)' == 'True'">True</IsLinuxMuslX64>
     <IsLinuxMuslArm64 Condition="'$(IsLinuxArm64)' == 'True' And '$(IsMuslLibFound)' == 'True'">True</IsLinuxMuslArm64>
     <!-- <IsMuslDetected ><Exec Command="ldd /bin/sh | grep musl"/>True</IsMuslDetected> -->
-    <IsMuslLibFound Condition="Exists('/lib/ld-musl-aarch64.so.1') or Exists('/lib/ld-musl-x86_64.so.1')">True</IsMuslLibFound>
+    <IsMuslLibFound Condition="$([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'True' Or $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True'">True</IsMuslLibFound>
     <!-- musl detection notes -->
     <!-- https://github.com/dotnet/runtime/blob/a50ba0669353893ca8ade8568b0a7d210b5a425f/src/mono/llvm/llvm-init.proj#L7 -->
     <!-- https://github.com/dotnet/runtime/blob/a50ba0669353893ca8ade8568b0a7d210b5a425f/src/libraries/Common/tests/TestUtilities/System/PlatformDetection.Unix.cs#L78 -->
