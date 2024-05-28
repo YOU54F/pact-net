@@ -14,6 +14,9 @@
       <!-- https://github.com/dotnet/runtime/blob/a50ba0669353893ca8ade8568b0a7d210b5a425f/src/mono/llvm/llvm-init.proj#L7 -->
       <!-- https://github.com/dotnet/runtime/blob/a50ba0669353893ca8ade8568b0a7d210b5a425f/src/libraries/Common/tests/TestUtilities/System/PlatformDetection.Unix.cs#L78 -->
       <!-- https://learn.microsoft.com/en-us/visualstudio/msbuild/exec-task?view=vs-2022 -->
+      <!-- https://jeremybytes.blogspot.com/2020/05/cross-platform-build-events-in-net-core.html -->
+      <!-- https://www.creepingcoder.com/2020/06/01/msbuild-101-using-the-exit-code-from-a-command/ -->
+      <!-- https://stackoverflow.com/questions/76583824/set-propertygroup-property-to-exec-output -->
       <!-- dotnet restore slow in container -->
       <!-- https://github.com/NuGet/Home/issues/13062#issuecomment-1845202196 -->
 
@@ -30,8 +33,8 @@
       <IsLinuxMuslArm64LibFound Condition="$([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True'">True</IsLinuxMuslArm64LibFound>
     </PropertyGroup>
     <!-- only run this check if linux and the musl shared libs were found -->
-    <Exec Command="ldd /bin/sh | grep musl" ConsoleToMSBuild="true" StandardOutputImportance="low" Condition="$(IsLinux) == 'True' And ($(IsLinuxMuslX64LibFound) == 'True' Or $(IsLinuxMuslArm64LibFound) == 'True')">
-        <Output TaskParameter="ExitCode" PropertyName="IsMuslDetected"/>
+    <Exec Command="ldd /bin/sh | grep musl" ConsoleToMSBuild="true" StandardOutputImportance="low" ContinueOnError="true" Condition="$(IsLinux) == 'True' And ($(IsLinuxMuslX64LibFound) == 'True' Or $(IsLinuxMuslArm64LibFound) == 'True')">
+        <Output TaskParameter="ExitCode" PropertyName="IsLinuxMuslLoaded"/>
     </Exec>
     <PropertyGroup>
       <IsWindows>False</IsWindows>
@@ -42,8 +45,8 @@
       <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsArm64>
       <IsLinuxX64 Condition="'$(IsLinux)' == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxX64>
       <IsLinuxArm64 Condition="'$(IsLinux)' == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxArm64>
-      <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslLoaded) == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
-      <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $(IsLinuxMuslLoaded) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64>
+      <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And '$(IsLinuxMuslLoaded)' == '0' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
+      <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And '$(IsLinuxMuslLoaded)' == '0' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64>
     </PropertyGroup>
 
     <ItemGroup>
