@@ -17,12 +17,12 @@
     <IsArm64>False</IsArm64>
     <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsArm64>
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">True</IsWindows>
-    <IsLinuxX64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And '$(IsArm64)' == False">True</IsLinuxX64>
+    <IsLinuxX64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxX64>
     <IsLinuxArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxArm64>
     <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True'">True</IsOSX>
-    <IsLinuxMuslX64 Condition="'$(IsLinuxX64)' == 'True' And '$(IsMuslDetected)' == 'True'">True</IsLinuxMuslX64>
-    <IsLinuxMuslArm64 Condition="'$(IsLinuxArm64)' == 'True' And '$(IsMuslDetected)' == 'True'">True</IsLinuxMuslArm64>
-    <IsMuslDetected ><Exec Command="ldd /bin/sh | grep musl"/>True</IsMuslDetected>
+    <IsLinuxMuslX64 Condition="'$(IsLinuxX64)' == 'True' And '$(IsMuslLibFound)' == 'True'">True</IsLinuxMuslX64>
+    <IsLinuxMuslArm64 Condition="'$(IsLinuxArm64)' == 'True' And '$(IsMuslLibFound)' == 'True'">True</IsLinuxMuslArm64>
+    <!-- <IsMuslDetected ><Exec Command="ldd /bin/sh | grep musl"/>True</IsMuslDetected> -->
     <IsMuslLibFound Condition="Exists('$(ROOTFS_DIR)/lib/ld-musl-aarch64.so.1') or Exists('$(ROOTFS_DIR)/lib/ld-musl-x86_64.so.1')">True</IsMuslLibFound>
     <!-- musl detection notes -->
     <!-- https://github.com/dotnet/runtime/blob/a50ba0669353893ca8ade8568b0a7d210b5a425f/src/mono/llvm/llvm-init.proj#L7 -->
