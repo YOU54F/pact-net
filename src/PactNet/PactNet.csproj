@@ -19,10 +19,10 @@
     <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True'">True</IsOSX>
     <IsArm64>False</IsArm64>
     <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsArm64>
-    <IsLinuxX64 Condition="'$(IsLinux)' == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' != 'Arm64'">True</IsLinuxX64>
-    <IsLinuxArm64 Condition="'$(IsLinux)' == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsLinuxArm64>
-    <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' != 'Arm64'">True</IsLinuxMuslX64>
-    <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsLinuxMuslArm64>
+    <IsLinuxX64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'False' And '$(IsArm64)' == 'False'">True</IsLinuxX64>
+    <IsLinuxArm64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'False' And '$(IsArm64)' == 'True'">True</IsLinuxArm64>
+    <IsLinuxMuslX64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxMuslX64>
+    <IsLinuxMuslArm64 Condition="'$(IsLinux)' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxMuslArm64>
 
     <!-- <IsLinuxX64 Condition="'$(IsLinux)' == 'True' And '$(IsArm64)' == 'False'">True</IsLinuxX64>
     <IsLinuxArm64 Condition="'$(IsLinux)' == 'True' And '$(IsArm64)' == 'True'">True</IsLinuxArm64>
