@@ -10,8 +10,9 @@ env:
 
 jobs:
   build-dotnet:
-    name: "Build and Test (dotnet)"
+    name: ${{ matrix.arch }}-${{ matrix.os }}-build-dotnet
     strategy:
+      fail-fast: false
       matrix:
         os:
           - windows-latest
@@ -43,8 +44,8 @@ jobs:
             build/windows
 
       - name: Pull interop dependencies
-        run: bash -c "build/download-native-libs.sh"
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: bash -c "build/download-native-libs.sh"
 
       - name: Restore
         run: dotnet restore
@@ -66,8 +67,56 @@ jobs:
           name: nupkgs
           path: ./dist/*.*
 
+  build-dotnet-containers:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.arch }}-${{ matrix.distro }}-build-dotnet-container
+    strategy:
+      fail-fast: false
+      matrix:
+        arch:
+          - amd64 
+          # - arm64
+        distro:
+          - "mcr.microsoft.com/dotnet/sdk:8.0"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine"
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up QEMU
+        if: matrix.arch != 'amd64'
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: ${{ matrix.arch }}
+
+      - name: Docker dependencies
+        id: docker_commands
+        shell: bash
+        run: |
+          if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
+            echo "deps=apk add --no-cache curl bash gzip && " >> "$GITHUB_OUTPUT"
+          else
+            echo "deps=" >> "$GITHUB_OUTPUT"
+          fi
+  
+      - name: Restore, Build & Test
+        run: |
+          docker run \
+            --rm \
+            -v $(pwd):/${{ github.workspace }} \
+            -w ${{ github.workspace }} \
+            --platform linux/${{ matrix.arch }} \
+            --entrypoint /bin/sh \
+            ${{ matrix.distro }} \
+            -c '${{ steps.docker_commands.outputs.deps }} \
+            build/download-native-libs.sh && \
+            dotnet restore && dotnet build --no-restore && \
+            dotnet test --no-build --verbosity normal'      
+
   release:
-    needs: build-dotnet
+    needs: [
+      build-dotnet,
+      build-dotnet-containers
+      ]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
