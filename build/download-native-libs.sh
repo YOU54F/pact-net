@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-FFI_VERSION="0.4.16"
+FFI_VERSION="0.4.17"
 FFI_BASE_URL="https://github.com/pact-foundation/pact-reference/releases/download/libpact_ffi-v$FFI_VERSION"
 
 GREEN="\e[32m"
@@ -42,11 +42,27 @@ download_native() {
 
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # OSX requires an empty arg passed to -i, but this doesn't work on Lin/Win
-        sed -Ei '' "s|../release_artifacts/.+$|$path/$dest_file|" "$path/$dest_file.sha256"
+        sed -Ei '' "s|\*(.*)$|\*$path/$dest_file|" "$path/$dest_file.sha256"
         shasum -a 256 --check --quiet "$path/$dest_file.sha256"
     else
-        sed -Ei "s|../release_artifacts/.+$|$path/$dest_file|" "$path/$dest_file.sha256"
-        sha256sum --check --quiet "$path/$dest_file.sha256"
+        sed -Ei "s|\*(.*)$|\*$path/$dest_file|" "$path/$dest_file.sha256"
+        if [[ "$OSTYPE" == "linux"* ]]; then
+            if ldd /bin/ls >/dev/null 2>&1; then
+                ldd_output=$(ldd /bin/ls)
+                case "$ldd_output" in
+                    *musl*) 
+                        sha256sum -c -s "$path/$dest_file.sha256"
+                        ;;
+                    *) 
+                        sha256sum --check --quiet "$path/$dest_file.sha256"
+                        ;;
+                esac
+            else
+                sha256sum --check --quiet "$path/$dest_file.sha256"   
+            fi
+        else
+            sha256sum --check --quiet "$path/$dest_file.sha256"
+        fi
     fi
 
     rm "$path/$dest_file.sha256"
@@ -60,5 +76,8 @@ download_native() {
 
 download_native "pact_ffi" "windows" "x86_64" "dll"
 download_native "libpact_ffi" "linux" "x86_64" "so"
+download_native "libpact_ffi" "linux" "aarch64" "so"
+download_native "libpact_ffi" "linux" "x86_64-musl" "so"
+download_native "libpact_ffi" "linux" "aarch64-musl" "so"
 download_native "libpact_ffi" "osx" "x86_64" "dylib"
 download_native "libpact_ffi" "osx" "aarch64-apple-darwin" "dylib"
