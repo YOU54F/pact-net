@@ -16,7 +16,10 @@
     <IsOSX>False</IsOSX>
     <IsArm64>False</IsArm64>
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">True</IsWindows>
-    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True'">True</IsLinux>
+    <IsLinuxX64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'False' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' != 'Arm64'">True</IsLinuxX64>
+    <IsLinuxArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'False' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsLinuxArm64>
+    <IsLinuxMuslX64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-x86_64.so.1')) == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' != 'Arm64'">True</IsLinuxMuslX64>
+    <IsLinuxMuslArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True' And $([System.IO.File]::Exists('/lib/libc.musl-aarch64.so.1')) == 'True' And '$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsLinuxMuslArm64>
     <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True'">True</IsOSX>
     <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsArm64>
   </PropertyGroup>
@@ -33,7 +36,28 @@
       <Link>libpact_ffi.so</Link>
       <PackagePath>runtimes/linux-x64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsLinux)'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(IsLinuxX64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\aarch64\libpact_ffi.so">
+      <Link>libpact_ffi.so</Link>
+      <PackagePath>runtimes/linux-arm64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(IsLinuxArm64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\x86_64-musl\libpact_ffi.so">
+      <Link>libpact_ffi.so</Link>
+      <PackagePath>runtimes/linux-x64-musl/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(IsLinuxMuslX64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\aarch64-musl\libpact_ffi.so">
+      <Link>libpact_ffi.so</Link>
+      <PackagePath>runtimes/linux-arm64-musl/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(IsLinuxMuslArm64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\osx\x86_64\libpact_ffi.dylib">
