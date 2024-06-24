@@ -238,31 +238,12 @@ Due to using a shared native library instead of C# for the main Pact logic only 
 | Windows      | x64         | ✔️ Yes                                                              |
 | Linux (libc) | x86         | ❌ No                                                              |
 | Linux (libc) | x64         | ✔️ Yes                                                              |
-| Linux (musl) | x64         | ✔️ Yes (Tier 2)*                                                    |
-| Linux (libc) | ARM         | ✔️ Yes (Tier 3)*                                                    |
-| Linux (musl) | ARM         | ✔️ Yes (Tier 3)*                                                    |
+| Linux (musl) | x64         | ✔️ Yes                                                              |
+| Linux (libc) | ARM         | ✔️ Yes                                                              |
+| Linux (musl) | ARM         | ✔️ Yes                                                              |
 | OSX          | x64         | ✔️ Yes                                                              |
 | OSX          | ARM (M1/M2) | ✔️ Yes                                                              |
 
-#### Support
-
-- Tier 1
-  - Established
-  - Full CI/CD support.
-  - Users should not encounter issues
-  - Full reproducible examples running in CI, should be provided by users raising issues
-  - If using musl targets, users should attempt the same test on a libc target (such as debian)
-- Tier 2
-  - Recently introduced
-  - Full CI/CD support.
-  - Users may encounter issues
-  - Full reproducible examples running in CI, should be provided by users raising issues
-  - If using musl targets, users should attempt the same test on a libc target (such as debian)
-- Tier 3
-  - Recently introduced, No/limited CI/CD support.
-  - Users may encounter issues
-  - Full reproducible examples which can be run by maintainers locally, should be provided by users raising issues
-  
 ### Pact Specification
 
 | Version | Status     | [Spec] Compatibility | Install            |
