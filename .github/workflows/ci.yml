@@ -58,7 +58,7 @@ jobs:
           enableCrossOsArchive: true
           path: |
             build/linux
-            build/osx
+            build/macos
             build/windows
 
       - name: Set up QEMU
