@@ -80,24 +80,30 @@ jobs:
 
   build-dotnet-containers:
     runs-on: ubuntu-latest
-    name: ${{ matrix.os }}-${{ matrix.distro }}-build-dotnet-container
+    name: ${{ matrix.arch }}-${{ matrix.distro }}-build-dotnet-container
     strategy:
       fail-fast: false
       matrix:
-        os: 
-          - ubuntu-24.04
-          - ubuntu-24.04-arm
+        arch:
+          - amd64 
+          # - arm64
         distro:
           - "mcr.microsoft.com/dotnet/sdk:8.0"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.20"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19"
 
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v4
 
       - name: Docker dependencies
         id: docker_commands
         shell: bash
         run: |
-            echo "deps=apt-get update --yes && apt-get install -y protobuf-compiler xz-utils &&" >> "$GITHUB_OUTPUT"
+          if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
+            echo "deps=apk add --no-cache curl bash gzip && " >> "$GITHUB_OUTPUT"
+          else
+            echo "deps=" >> "$GITHUB_OUTPUT"
+          fi
   
       - name: Restore, Build & Test
         run: |
@@ -105,6 +111,7 @@ jobs:
             --rm \
             -v $(pwd):/${{ github.workspace }} \
             -w ${{ github.workspace }} \
+            --platform linux/${{ matrix.arch }} \
             --entrypoint /bin/sh \
             ${{ matrix.distro }} \
             -c '${{ steps.docker_commands.outputs.deps }} \
