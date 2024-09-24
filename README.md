@@ -42,7 +42,7 @@ Watch our [series](https://www.youtube.com/playlist?list=PLwy9Bnco-IpfZ72VQ7hce8
 
 ### Tutorial (60 minutes)
 
-[Learn everything in Pact Net in 60 minutes](https://github.com/DiUS/pact-workshop-dotnet-core-v3/)
+[Learn everything in Pact Net in 60 minutes](https://github.com/pact-foundation/pact-workshop-dotnet)
 
 ### Upgrade Guides
 
@@ -225,6 +225,35 @@ method shown in the sample above, so that they can be called from non-.Net code.
 For writing messaging pacts instead of requests/response pacts, see the [messaging pacts guide](docs/messaging-pacts.md).
 
 ![----------](https://raw.githubusercontent.com/pactumjs/pactum/master/assets/rainbow.png)
+
+### Multipart/form-data Content-Type Support
+
+Pact-Net supports API Requests where a single file is uploaded using the multipart/form-data content-type using the `WithFileUpload` method.
+
+```csharp
+this.pact
+    .UponReceiving($"a request to upload a file")
+        .WithRequest(HttpMethod.Post, $"/events/upload-file")
+        .WithFileUpload(contentType, fileInfo, "fileName")
+    .WillRespond()
+        .WithStatus(201);
+```
+
+### Params
+
+contentType : The content-type of the file being uploaded, ie `image/jpeg`. Separate from the content-type header of the request.
+
+fileInfo : The FileInfo of the file being uploaded.
+
+fileName : A string representing the name of the file being uploaded.
+
+### Limitations
+
+- The content-type of the file being uploaded will be verified when running the pact tests in a such as your CI/CD environment.
+- Multipart/form-data payloads that contain more than one part are not supported currently. The recommended work around is to create a string payload with the expected parts and add this to the pact file using the .WithBody() method, which allows an arbitrary string to be set as the body.
+
+![----------](https://raw.githubusercontent.com/pactumjs/pactum/master/assets/rainbow.png)
+
 
 ## Compatibility
 
