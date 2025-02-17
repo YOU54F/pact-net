@@ -89,9 +89,6 @@ jobs:
           - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.20"
           - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.19"
           - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.18"
-          - "mcr.microsoft.com/dotnet/sdk:7.0-alpine3.17"
-          - "mcr.microsoft.com/dotnet/sdk:7.0-alpine3.16"
-          - "mcr.microsoft.com/dotnet/sdk:7.0-alpine3.15"
 
     steps:
       - uses: actions/checkout@v4
