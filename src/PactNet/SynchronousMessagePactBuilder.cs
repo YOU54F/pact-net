@@ -1,5 +1,6 @@
 using System;
 using PactNet.Drivers;
+using PactNet.Drivers.Message;
 
 namespace PactNet
 {
