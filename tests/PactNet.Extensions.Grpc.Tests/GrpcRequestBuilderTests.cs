@@ -26,13 +26,13 @@ public class GrpcRequestBuilderTests(ITestOutputHelper testOutputHelper)
                     ""response"": {{
                         ""message"": ""matching(type, 'Hello foo')""
                     }}
-                }}".Replace(Environment.NewLine, "").Replace("'", "\\u0027");
+                }}".Replace(Environment.NewLine, "").Replace("'", "\\u0027").Replace("\r", "");
 
 
         builder.WithRequest(protoFilePath, serviceName, methodName, new { name = "matching(type, 'foo')" })
             .WillRespond().WithBody(new { message = "matching(type, 'Hello foo')" });
         var actual = JsonSerializer.Serialize(builder.InteractionContents);
         testOutputHelper.WriteLine(actual);
-        Assert.Equal(content, actual, ignoreAllWhiteSpace: true);
+        Assert.Equal(content.Replace("\\u0022","\""), actual, ignoreAllWhiteSpace: true);
     }
 }
