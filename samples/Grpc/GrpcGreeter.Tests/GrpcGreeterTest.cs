@@ -16,7 +16,7 @@ namespace GrpcGreeter.Tests
     {
         private readonly PactVerifier verifier = new("Grpc Greeter Api", new PactVerifierConfig
         {
-            LogLevel = PactLogLevel.Information,
+            LogLevel = PactLogLevel.Debug,
             Outputters = new List<IOutput>
             {
                 new XunitOutput(output)
