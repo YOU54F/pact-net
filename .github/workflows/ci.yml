@@ -52,7 +52,8 @@ jobs:
       - name: Pull interop dependencies
         run: bash -c "build/download-native-libs.sh"
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
-
+      - uses: pact-foundation/pact-cli@main
+      - run: pact plugin install --yes protobuf --version 0.6.5
       - name: Restore
         run: dotnet restore
 
