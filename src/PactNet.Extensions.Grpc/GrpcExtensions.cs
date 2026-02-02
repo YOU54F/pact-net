@@ -17,7 +17,7 @@ public static class GrpcExtensions
     /// <returns>Pact builder</returns>
     public static IGrpcPactBuilderV4 WithGrpcInteractions(this IPactV4 pact, int? port = null, IPAddress host = IPAddress.Loopback)
     {
-        var pluginBuilder = pact.WithSynchronousPluginInteractions("protobuf", "0.4.0", transport: "grpc", port, host);
+        var pluginBuilder = pact.WithSynchronousPluginInteractions("protobuf", "0.6.5", transport: "grpc", port, host);
         var builder = new GrpcPactBuilder(pluginBuilder);
         return builder;
     }
