@@ -18,7 +18,7 @@ namespace PactNet.Verifier.Messaging
     /// </summary>
     internal class MessagingProvider : IMessagingProvider
     {
-        private const int MinimumPort = 49152;
+        private const int MinimumPort = 30000;
         private const int MaximumPort = 65535;
         private const int MaxStartAttempts = 25;
 
