@@ -56,6 +56,11 @@ jobs:
         run: bash -c "build/download-native-libs.sh"
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
   
+      - name: Install protoc
+        run: |
+          apt-get install --yes protobuf-compiler
+        if: ${{ matrix.os == 'ubuntu-24.04-arm' }}
+  
       - uses: pact-foundation/pact-cli@main
       - run: pact plugin install --yes protobuf --version 0.8.0
       - name: Restore
@@ -102,9 +107,9 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
-            echo "deps=apk add --no-cache curl bash gzip && " >> "$GITHUB_OUTPUT"
+            echo "deps=apk add --no-cache curl bash gzip protoc && " >> "$GITHUB_OUTPUT"
           else
-            echo "deps=" >> "$GITHUB_OUTPUT"
+            echo "deps=apt-get install -y protobuf-compiler" >> "$GITHUB_OUTPUT"
           fi
   
       - name: Restore, Build & Test
