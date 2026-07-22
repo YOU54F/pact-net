@@ -118,10 +118,10 @@ jobs:
             --rm \
             -v $(pwd):/${{ github.workspace }} \
             -w ${{ github.workspace }} \
+            -e PROTOBUF_PROTOC='/usr/bin/protoc' \
+            -e gRPC_PluginFullPath='/usr/bin/grpc_csharp_plugin' \
             --entrypoint /bin/sh \
             ${{ matrix.distro }} \
-            -e PROTOBUF_PROTOC=/usr/bin/protoc \
-            -e gRPC_PluginFullPath=/usr/bin/grpc_csharp_plugin \
             -c '${{ steps.docker_commands.outputs.deps }} \
             build/download-native-libs.sh && \
             dotnet restore && dotnet build --no-restore && \
