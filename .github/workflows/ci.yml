@@ -58,7 +58,7 @@ jobs:
   
       - name: Install protoc
         run: |
-          apt-get install --yes protobuf-compiler
+          sudo apt-get install --yes protobuf-compiler
         if: ${{ matrix.os == 'ubuntu-24.04-arm' }}
   
       - uses: pact-foundation/pact-cli@main
@@ -111,6 +111,15 @@ jobs:
           else
             echo "deps=apt-get install -y protobuf-compiler" >> "$GITHUB_OUTPUT"
           fi
+      - name: Docker env vars
+        id: env_vars
+        shell: bash
+        run: |
+          if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
+            echo "env_vars=-e PROTOBUF_PROTOC='/usr/bin/protoc' -e gRPC_PluginFullPath='/usr/bin/grpc_csharp_plugin'" >> "$GITHUB_OUTPUT"
+          else
+            echo "env_vars=''" >> "$GITHUB_OUTPUT"
+          fi
   
       - name: Restore, Build & Test
         run: |
@@ -118,8 +127,7 @@ jobs:
             --rm \
             -v $(pwd):/${{ github.workspace }} \
             -w ${{ github.workspace }} \
-            -e PROTOBUF_PROTOC='/usr/bin/protoc' \
-            -e gRPC_PluginFullPath='/usr/bin/grpc_csharp_plugin' \
+            ${{ steps.env_vars.outputs.env_vars }} \
             --entrypoint /bin/sh \
             ${{ matrix.distro }} \
             -c '${{ steps.docker_commands.outputs.deps }} \
