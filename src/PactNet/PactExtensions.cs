@@ -128,6 +128,7 @@ namespace PactNet
             var builder = new SynchronousMessagePactBuilder(messagePact, pact.Config);
             return builder;
         }
+        /// <summary>
         /// Establish a new pact with synchronous plugin interactions.
         /// </summary>
         /// <param name="pact"></param>
