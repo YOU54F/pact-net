@@ -1,0 +1,62 @@
+{
+  "consumer": {
+    "name": "PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponseAsync"
+  },
+  "interactions": [
+    {
+      "description": "a synchronous async message",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a provider state"
+        }
+      ],
+      "request": {
+        "contents": {
+          "content": {
+            "bool": false,
+            "int": 10,
+            "string": "an async request"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "metadata": {
+          "contentType": "application/json"
+        }
+      },
+      "response": [
+        {
+          "contents": {
+            "content": {
+              "bool": false,
+              "int": 20,
+              "string": "an async response"
+            },
+            "contentType": "application/json",
+            "encoded": false
+          },
+          "metadata": {
+            "contentType": "application/json"
+          }
+        }
+      ],
+      "type": "Synchronous/Messages"
+    }
+  ],
+  "metadata": {
+    "framework": {
+      "language": "C#"
+    },
+    "pactRust": {
+      "ffi": "0.4.27",
+      "models": "1.2.8"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "PactExtensionsTests-SyncMessageProvider"
+  }
+}

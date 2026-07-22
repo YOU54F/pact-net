@@ -79,6 +79,9 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_new_message_interaction")]
         public static extern InteractionHandle NewMessageInteraction(PactHandle pact, string description);
 
+        [DllImport(DllName, EntryPoint = "pactffi_new_sync_message_interaction")]
+        public static extern InteractionHandle NewSyncMessageInteraction(PactHandle pact, string description);
+
         [DllImport(DllName, EntryPoint = "pactffi_message_expects_to_receive")]
         public static extern void MessageExpectsToReceive(InteractionHandle message, string description);
 
@@ -91,7 +94,116 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_message_reify")]
         public static extern IntPtr MessageReify(InteractionHandle message);
 
-        #endregion Http Interop Support
+        #endregion Messaging Interop Support
+
+        #region Message Model Interop Support
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_interaction_as_asynchronous_message")]
+        public static extern IntPtr PactInteractionAsAsynchronousMessage(IntPtr interaction);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_interaction_as_synchronous_message")]
+        public static extern IntPtr PactInteractionAsSynchronousMessage(IntPtr interaction);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_handle_get_async_message_iter")]
+        public static extern IntPtr PactHandleGetAsyncMessageIter(PactHandle pact);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_async_message_iter_next")]
+        public static extern IntPtr PactAsyncMessageIterNext(IntPtr iterator);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_async_message_iter_delete")]
+        public static extern void PactAsyncMessageIterDelete(IntPtr iterator);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_delete")]
+        public static extern void AsyncMessageDelete(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_contents_str")]
+        public static extern IntPtr AsyncMessageGetContentsStr(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_set_contents_str")]
+        public static extern void AsyncMessageSetContentsStr(IntPtr message, string contents, string contentType);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_contents_length")]
+        public static extern UIntPtr AsyncMessageGetContentsLength(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_contents_bin")]
+        public static extern IntPtr AsyncMessageGetContentsBin(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_contents")]
+        public static extern IntPtr AsyncMessageGetContents(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_generate_contents")]
+        public static extern IntPtr AsyncMessageGenerateContents(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_description")]
+        public static extern IntPtr AsyncMessageGetDescription(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_provider_state")]
+        public static extern IntPtr AsyncMessageGetProviderState(IntPtr message, uint index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_async_message_get_provider_state_iter")]
+        public static extern IntPtr AsyncMessageGetProviderStateIter(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_handle_get_sync_message_iter")]
+        public static extern IntPtr PactHandleGetSyncMessageIter(PactHandle pact);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_sync_message_iter_next")]
+        public static extern IntPtr PactSyncMessageIterNext(IntPtr iterator);
+
+        [DllImport(DllName, EntryPoint = "pactffi_pact_sync_message_iter_delete")]
+        public static extern void PactSyncMessageIterDelete(IntPtr iterator);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_delete")]
+        public static extern void SyncMessageDelete(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_request_contents_str")]
+        public static extern IntPtr SyncMessageGetRequestContentsStr(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_set_request_contents_str")]
+        public static extern void SyncMessageSetRequestContentsStr(IntPtr message, string contents, string contentType);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_request_contents_length")]
+        public static extern UIntPtr SyncMessageGetRequestContentsLength(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_request_contents_bin")]
+        public static extern IntPtr SyncMessageGetRequestContentsBin(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_request_contents")]
+        public static extern IntPtr SyncMessageGetRequestContents(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_generate_request_contents")]
+        public static extern IntPtr SyncMessageGenerateRequestContents(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_number_responses")]
+        public static extern UIntPtr SyncMessageGetNumberResponses(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_response_contents_str")]
+        public static extern IntPtr SyncMessageGetResponseContentsStr(IntPtr message, UIntPtr index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_set_response_contents_str")]
+        public static extern void SyncMessageSetResponseContentsStr(IntPtr message, UIntPtr index, string contents, string contentType);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_response_contents_length")]
+        public static extern UIntPtr SyncMessageGetResponseContentsLength(IntPtr message, UIntPtr index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_response_contents_bin")]
+        public static extern IntPtr SyncMessageGetResponseContentsBin(IntPtr message, UIntPtr index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_response_contents")]
+        public static extern IntPtr SyncMessageGetResponseContents(IntPtr message, UIntPtr index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_generate_response_contents")]
+        public static extern IntPtr SyncMessageGenerateResponseContents(IntPtr message, UIntPtr index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_description")]
+        public static extern IntPtr SyncMessageGetDescription(IntPtr message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_provider_state")]
+        public static extern IntPtr SyncMessageGetProviderState(IntPtr message, uint index);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_get_provider_state_iter")]
+        public static extern IntPtr SyncMessageGetProviderStateIter(IntPtr message);
+
+        #endregion Message Model Interop Support
 
         #region Verifier Support
 

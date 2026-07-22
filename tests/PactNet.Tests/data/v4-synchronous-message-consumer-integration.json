@@ -1,0 +1,72 @@
+{
+  "consumer": {
+    "name": "PactExtensionsTests-SyncMessageConsumer-V4"
+  },
+  "interactions": [
+    {
+      "description": "a synchronous message",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "a provider state"
+        },
+        {
+          "name": "another provider state"
+        },
+        {
+          "name": "a provider state with params",
+          "params": {
+            "baz": "bash",
+            "foo": "bar"
+          }
+        }
+      ],
+      "request": {
+        "contents": {
+          "content": {
+            "bool": false,
+            "int": 1,
+            "string": "a request"
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "metadata": {
+          "contentType": "application/json"
+        }
+      },
+      "response": [
+        {
+          "contents": {
+            "content": {
+              "bool": false,
+              "int": 2,
+              "string": "a response"
+            },
+            "contentType": "application/json",
+            "encoded": false
+          },
+          "metadata": {
+            "contentType": "application/json"
+          }
+        }
+      ],
+      "type": "Synchronous/Messages"
+    }
+  ],
+  "metadata": {
+    "framework": {
+      "language": "C#"
+    },
+    "pactRust": {
+      "ffi": "0.4.27",
+      "models": "1.2.8"
+    },
+    "pactSpecification": {
+      "version": "4.0"
+    }
+  },
+  "provider": {
+    "name": "PactExtensionsTests-SyncMessageProvider"
+  }
+}

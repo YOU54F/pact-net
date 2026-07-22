@@ -71,6 +71,12 @@ namespace Provider.Tests
                 .WithMessages(scenarios =>
                 {
                     scenarios.Add("an event indicating that an order has been created", () => new OrderCreatedEvent(1));
+                    scenarios.Add("a synchronous message requesting that an order status is updated", () => new
+                    {
+                        Id = 1,
+                        Status = OrderStatus.Fulfilling,
+                        Accepted = true
+                    });
                 }, Options)
                 .WithFileSource(new FileInfo(pactPath))
                 .WithProviderStateUrl(new Uri(ProviderUri, "/provider-states"))

@@ -132,6 +132,68 @@
       "type": "Synchronous/HTTP"
     },
     {
+      "description": "a synchronous message requesting that an order status is updated",
+      "pending": false,
+      "providerStates": [
+        {
+          "name": "an order with ID {id} exists",
+          "params": {
+            "id": 1
+          }
+        }
+      ],
+      "request": {
+        "contents": {
+          "content": {
+            "id": 1,
+            "requestedStatus": 1
+          },
+          "contentType": "application/json",
+          "encoded": false
+        },
+        "matchingRules": {
+          "body": {
+            "$.id": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            },
+            "$.requestedStatus": {
+              "combine": "AND",
+              "matchers": [
+                {
+                  "match": "integer"
+                }
+              ]
+            }
+          }
+        },
+        "metadata": {
+          "contentType": "application/json"
+        }
+      },
+      "response": [
+        {
+          "contents": {
+            "content": {
+              "accepted": true,
+              "id": 1,
+              "status": 1
+            },
+            "contentType": "application/json",
+            "encoded": false
+          },
+          "metadata": {
+            "contentType": "application/json"
+          }
+        }
+      ],
+      "type": "Synchronous/Messages"
+    },
+    {
       "contents": {
         "content": {
           "id": 1

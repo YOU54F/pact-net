@@ -71,6 +71,9 @@ namespace PactNet.Tests
             File.Delete("PactExtensionsTests-Consumer-V3-PactExtensionsTests-Provider.json");
             File.Delete("PactExtensionsTests-Consumer-V4-PactExtensionsTests-Provider.json");
             File.Delete("PactExtensionsTests-Combined-V4-PactExtensionsTests-Provider.json");
+            File.Delete("PactExtensionsTests-SyncMessageConsumer-V4-PactExtensionsTests-SyncMessageProvider.json");
+            File.Delete("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponse-PactExtensionsTests-SyncMessageProvider.json");
+            File.Delete("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponseAsync-PactExtensionsTests-SyncMessageProvider.json");
         }
 
         [Fact]
@@ -226,6 +229,72 @@ namespace PactNet.Tests
 
             string actualPact = File.ReadAllText("PactExtensionsTests-MessageConsumer-V4-PactExtensionsTests-MessageProvider.json").TrimEnd();
             string expectedPact = File.ReadAllText("data/v4-message-consumer-integration.json").TrimEnd();
+
+            actualPact.Should().Be(expectedPact);
+        }
+
+        [Fact]
+        public void WithSynchronousMessageInteractions_V4_CreatesExpectedPactFile()
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-V4", "PactExtensionsTests-SyncMessageProvider", config);
+            ISynchronousMessagePactBuilderV4 builder = messagePact.WithSynchronousMessageInteractions();
+
+            builder
+                .WithPactMetadata("framework", "language", "C#")
+                .ExpectsToReceive("a synchronous message")
+                .Given("a provider state")
+                .Given("another provider state")
+                .Given("a provider state with params", new Dictionary<string, string>
+                {
+                    ["foo"] = "bar",
+                    ["baz"] = "bash"
+                })
+                .WithRequestJsonContent(new TestData { Int = 1, String = "a request" })
+                .WithResponseJsonContent(new TestData { Int = 2, String = "a response" })
+                .Verify<TestData>(_ => { });
+
+            string actualPact = File.ReadAllText("PactExtensionsTests-SyncMessageConsumer-V4-PactExtensionsTests-SyncMessageProvider.json").TrimEnd();
+            string expectedPact = File.ReadAllText("data/v4-synchronous-message-consumer-integration.json").TrimEnd();
+
+            actualPact.Should().Be(expectedPact);
+        }
+
+        [Fact]
+        public void WithSynchronousMessageInteractions_V4_VerifyWithResponse_CreatesExpectedSynchronousMessagePact()
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponse", "PactExtensionsTests-SyncMessageProvider", config);
+            ISynchronousMessagePactBuilderV4 builder = messagePact.WithSynchronousMessageInteractions();
+
+            builder
+                .WithPactMetadata("framework", "language", "C#")
+                .ExpectsToReceive("a synchronous message")
+                .Given("a provider state")
+                .WithRequestJsonContent(new TestData { Int = 1, String = "a request" })
+                .WithResponseJsonContent(new TestData { Int = 2, String = "a response" })
+                .VerifyWithResponse<TestData, TestData>(_ => new TestData { Int = 2, String = "a response" });
+
+            string actualPact = File.ReadAllText("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponse-PactExtensionsTests-SyncMessageProvider.json").TrimEnd();
+            string expectedPact = File.ReadAllText("data/v4-synchronous-message-consumer-verify-with-response-integration.json").TrimEnd();
+
+            actualPact.Should().Be(expectedPact);
+        }
+
+        [Fact]
+        public async Task WithSynchronousMessageInteractions_V4_VerifyWithResponseAsync_CreatesExpectedSynchronousMessagePact()
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponseAsync", "PactExtensionsTests-SyncMessageProvider", config);
+            ISynchronousMessagePactBuilderV4 builder = messagePact.WithSynchronousMessageInteractions();
+
+            await builder
+                .WithPactMetadata("framework", "language", "C#")
+                .ExpectsToReceive("a synchronous async message")
+                .Given("a provider state")
+                .WithRequestJsonContent(new TestData { Int = 10, String = "an async request" })
+                .WithResponseJsonContent(new TestData { Int = 20, String = "an async response" })
+                .VerifyWithResponseAsync<TestData, TestData>(_ => Task.FromResult(new TestData { Int = 20, String = "an async response" }));
+
+            string actualPact = File.ReadAllText("PactExtensionsTests-SyncMessageConsumer-V4-VerifyWithResponseAsync-PactExtensionsTests-SyncMessageProvider.json").TrimEnd();
+            string expectedPact = File.ReadAllText("data/v4-synchronous-message-consumer-verify-with-response-async-integration.json").TrimEnd();
 
             actualPact.Should().Be(expectedPact);
         }
