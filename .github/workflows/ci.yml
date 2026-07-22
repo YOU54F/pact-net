@@ -107,7 +107,7 @@ jobs:
         shell: bash
         run: |
           if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
-            echo "deps=apk add --no-cache curl bash gzip protoc && " >> "$GITHUB_OUTPUT"
+            echo "deps=apk add --no-cache curl bash gzip protobuf protobuf-dev grpc grpc-plugins && " >> "$GITHUB_OUTPUT"
           else
             echo "deps=apt-get install -y protobuf-compiler" >> "$GITHUB_OUTPUT"
           fi
