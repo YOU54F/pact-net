@@ -133,7 +133,7 @@ jobs:
             -c '${{ steps.docker_commands.outputs.deps }} \
             build/download-native-libs.sh && \
             curl --proto '=https' --tlsv1.2 -LsSf https://github.com/pact-foundation/pact-cli/releases/download/v0.10.7/pact-installer.sh | sh && \
-            source $HOME/.pact/bin/env && \
+            . /root/.pact/bin/env && \
             pact plugin install --yes protobuf --version 0.8.0
             dotnet restore && dotnet build --no-restore && \
             dotnet test --no-build --verbosity normal'      
