@@ -109,7 +109,7 @@ jobs:
           if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
             echo "deps=apk add --no-cache curl bash gzip protobuf protobuf-dev grpc grpc-plugins && " >> "$GITHUB_OUTPUT"
           else
-            echo "deps=apt-get update --yes && apt-get install -y protobuf-compiler xz &&" >> "$GITHUB_OUTPUT"
+            echo "deps=apt-get update --yes && apt-get install -y protobuf-compiler xz-utils &&" >> "$GITHUB_OUTPUT"
           fi
       - name: Docker env vars
         id: env_vars

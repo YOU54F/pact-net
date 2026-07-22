@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.NetworkInformation;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -19,6 +20,7 @@ namespace PactNet.Verifier.Messaging
     {
         private const int MinimumPort = 49152;
         private const int MaximumPort = 65535;
+        private const int MaxStartAttempts = 25;
 
         private static readonly JsonSerializerOptions InteractionSettings = new JsonSerializerOptions
         {
@@ -59,7 +61,7 @@ namespace PactNet.Verifier.Messaging
             Guard.NotNull(settings, nameof(settings));
             this.defaultSettings = settings;
 
-            while (true)
+            for (int attempt = 1; attempt <= MaxStartAttempts; attempt++)
             {
                 Uri uri;
 
@@ -74,10 +76,11 @@ namespace PactNet.Verifier.Messaging
                     this.server.Prefixes.Add(uri.AbsoluteUri);
                     this.server.Start();
                 }
-                catch (HttpListenerException e) when (e.Message == "Address already in use")
+                catch (HttpListenerException e) when (IsAddressInUse(e))
                 {
-                    // handle intermittent race condition, mostly on MacOS, where a port says it's unused but still throws when you try to use it
-                    this.config.WriteLine("Failed to start messaging provider as the port is already in use, retrying...");
+                    // There is still a small race between selecting a port and binding the listener.
+                    // Retry with a fresh ephemeral port when this happens.
+                    this.config.WriteLine($"Failed to start messaging provider because the port is already in use (attempt {attempt}/{MaxStartAttempts}), retrying...");
                     continue;
                 }
                 catch (Exception e)
@@ -88,6 +91,8 @@ namespace PactNet.Verifier.Messaging
                 this.thread.Start();
                 return uri;
             }
+
+            throw new PactFailureException($"Unable to start the internal messaging server after {MaxStartAttempts} attempts because all candidate ports were in use");
         }
 
         /// <summary>
@@ -97,22 +102,40 @@ namespace PactNet.Verifier.Messaging
         /// <exception cref="InvalidOperationException">No local ports were available</exception>
         private static int FindUnusedPort()
         {
-            IPGlobalProperties properties = IPGlobalProperties.GetIPGlobalProperties();
+            // Ask the OS for an available ephemeral port rather than relying on a stale endpoint snapshot.
+            var listener = new TcpListener(IPAddress.Loopback, 0);
+            listener.Start();
 
-            var used = new HashSet<int>(properties.GetActiveTcpListeners()
-                                                  .Concat(properties.GetActiveUdpListeners())
-                                                  .Concat(properties.GetActiveTcpConnections().Select(tcp => tcp.LocalEndPoint))
-                                                  .Select(l => l.Port));
-
-            int port = Enumerable.Range(MinimumPort, (MaximumPort - MinimumPort))
-                                 .FirstOrDefault(port => !used.Contains(port));
-
-            if (port > 0)
+            try
             {
-                return port;
-            }
+                if (listener.LocalEndpoint is IPEndPoint endpoint)
+                {
+                    int port = endpoint.Port;
 
-            throw new InvalidOperationException("There are no available local ports to start the messaging provider");
+                    if (port is >= MinimumPort and <= MaximumPort)
+                    {
+                        return port;
+                    }
+
+                    throw new InvalidOperationException($"The selected local port {port} is outside the expected ephemeral range");
+                }
+
+                throw new InvalidOperationException("Unable to determine the selected local port from the loopback listener");
+            }
+            finally
+            {
+                listener.Stop();
+            }
+        }
+
+        private static bool IsAddressInUse(HttpListenerException exception)
+        {
+            // EADDRINUSE values by platform:
+            // - macOS/BSD: 48
+            // - Linux: 98
+            // - Windows (WSAEADDRINUSE): 10048
+            return exception.ErrorCode is 48 or 98 or 10048
+                   || string.Equals(exception.Message, "Address already in use", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>
