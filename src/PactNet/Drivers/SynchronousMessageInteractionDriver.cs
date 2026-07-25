@@ -46,6 +46,14 @@ namespace PactNet.Drivers
             => NativeInterop.WithBody(this.interaction, InteractionPart.Request, contentType, body).CheckInteropSuccess();
 
         /// <summary>
+        /// Set metadata for the message interaction
+        /// </summary>
+        /// <param name="key">metadata key</param>
+        /// <param name="value">metadata value</param>
+        public void WithMetadata(string key, string value)
+            => NativeInterop.MessageWithMetadata(this.interaction, key, value);
+
+        /// <summary>
         /// Add a response body to the message
         /// </summary>
         /// <param name="contentType">the content type</param>

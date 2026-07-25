@@ -14,6 +14,13 @@ namespace PactNet.Drivers
         void WithRequestContents(string contentType, string body, uint size);
 
         /// <summary>
+        /// Set metadata for the message interaction
+        /// </summary>
+        /// <param name="key">metadata key</param>
+        /// <param name="value">metadata value</param>
+        void WithMetadata(string key, string value);
+
+        /// <summary>
         /// Add a response body to the message
         /// </summary>
         /// <param name="contentType">the content type</param>

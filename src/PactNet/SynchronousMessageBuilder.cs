@@ -14,7 +14,9 @@ namespace PactNet
         private readonly PactConfig config;
 
         private string requestBody;
-        private string responseBody;
+        private readonly Dictionary<string, string> interactionMetadata = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly List<string> responseBodies = new List<string>();
+        private readonly List<Dictionary<string, string>> responseMetadata = new List<Dictionary<string, string>>();
 
         /// <summary>
         /// Initialises a new instance of the <see cref="SynchronousMessageBuilder"/> class.
@@ -46,6 +48,15 @@ namespace PactNet
         }
 
         /// <inheritdoc />
+        public ISynchronousMessageBuilderV4 WithMetadata(string key, string value)
+        {
+            this.interactionMetadata[key] = value;
+            this.driver.WithMetadata(key, value);
+
+            return this;
+        }
+
+        /// <inheritdoc />
         public ISynchronousMessageBuilderV4 WithRequestJsonContent(dynamic body)
             => this.WithRequestJsonContent(body, this.config.DefaultJsonSettings);
 
@@ -69,10 +80,11 @@ namespace PactNet
         {
             string serialised = JsonSerializer.Serialize(body, settings);
 
-            this.responseBody = serialised;
+            this.responseBodies.Add(serialised);
+            this.responseMetadata.Add(new Dictionary<string, string>(this.interactionMetadata, StringComparer.Ordinal));
             this.driver.WithResponseContents("application/json", serialised, 0);
 
-            return new ConfiguredSynchronousMessageVerifier(this.driver, this.config, this.requestBody, this.responseBody);
+            return new ConfiguredSynchronousMessageVerifier(this.driver, this.config, this.requestBody, this.interactionMetadata, this.responseBodies, this.responseMetadata);
         }
     }
 }

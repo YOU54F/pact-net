@@ -24,6 +24,14 @@ namespace PactNet
         ISynchronousMessageBuilderV4 Given(string providerState, IDictionary<string, string> parameters);
 
         /// <summary>
+        /// Set metadata for this synchronous message interaction
+        /// </summary>
+        /// <param name="key">the metadata key</param>
+        /// <param name="value">the metadata value</param>
+        /// <returns>Fluent builder</returns>
+        ISynchronousMessageBuilderV4 WithMetadata(string key, string value);
+
+        /// <summary>
         /// Set request content which is serialised as JSON
         /// </summary>
         /// <param name="body">Request body</param>
