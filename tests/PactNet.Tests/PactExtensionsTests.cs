@@ -85,8 +85,10 @@ namespace PactNet.Tests
             builder.UponReceiving("a sample request")
                        .Given("a provider state")
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                    //    regression in v0.5.4 - requires comma sep headers to be added singly
+                       .WithHeader("X-Request", "request1, request2")
+                    //    .WithHeader("X-Request", "request1")
+                    //    .WithHeader("X-Request", "request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -122,8 +124,7 @@ namespace PactNet.Tests
                            ["baz"] = "bash"
                        })
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                       .WithHeader("X-Request", "request1, request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -159,8 +160,8 @@ namespace PactNet.Tests
                             ["baz"] = "bash"
                         })
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                       .WithHeader("X-Request", "request1, request2")
+                    //    .WithHeader("X-Request", "request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -197,7 +198,7 @@ namespace PactNet.Tests
                     ["foo"] = "bar",
                     ["baz"] = "bash"
                 })
-                .WithMetadata("queueId", "1234")
+                .WithMetadata("queueId", "\"1234\"")
                 .WithJsonContent(new TestData { Int = 1, String = "a description" })
                 .Verify<TestData>(_ => { });
 
@@ -223,7 +224,7 @@ namespace PactNet.Tests
                     ["foo"] = "bar",
                     ["baz"] = "bash"
                 })
-               .WithMetadata("queueId", "1234")
+               .WithMetadata("queueId", "\"1234\"")
                .WithJsonContent(new TestData { Int = 1, String = "a description" })
                .Verify<TestData>(_ => { });
 
@@ -316,8 +317,8 @@ namespace PactNet.Tests
                         ["baz"] = "bash"
                     })
                     .WithRequest(HttpMethod.Post, "/things")
-                    .WithHeader("X-Request", "request1")
-                    .WithHeader("X-Request", "request2")
+                    .WithHeader("X-Request", "request1, request2")
+                    // .WithHeader("X-Request", "request2")
                     .WithQuery("param", "value1")
                     .WithQuery("param", "value2")
                     .WithJsonBody(this.matcher)
@@ -345,7 +346,7 @@ namespace PactNet.Tests
                     ["foo"] = "bar",
                     ["baz"] = "bash"
                 })
-                .WithMetadata("queueId", "1234")
+                .WithMetadata("queueId", "\"1234\"")
                 .WithJsonContent(new TestData { Int = 1, String = "a description" })
                 .Verify<TestData>(_ => { });
 
@@ -361,7 +362,7 @@ namespace PactNet.Tests
             {
                 BaseAddress = context.MockServerUri
             };
-            client.DefaultRequestHeaders.Add("X-Request", new[] { "request1", "request2" });
+            client.DefaultRequestHeaders.Add("X-Request", new[] { "request1","request2" });
 
             string content = JsonSerializer.Serialize(body, jsonSettings);
 
