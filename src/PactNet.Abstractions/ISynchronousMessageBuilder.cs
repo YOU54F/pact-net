@@ -24,12 +24,19 @@ namespace PactNet
         ISynchronousMessageBuilderV4 Given(string providerState, IDictionary<string, string> parameters);
 
         /// <summary>
-        /// Set metadata for this synchronous message interaction
+        /// Set metadata for this synchronous message interaction request
         /// </summary>
         /// <param name="key">the metadata key</param>
         /// <param name="value">the metadata value</param>
         /// <returns>Fluent builder</returns>
-        ISynchronousMessageBuilderV4 WithMetadata(string key, string value);
+        ISynchronousMessageBuilderV4 WithRequestMetadata(string key, string value);
+        /// <summary>
+        /// Set metadata for this synchronous message interaction response
+        /// </summary>
+        /// <param name="key">the metadata key</param>
+        /// <param name="value">the metadata value</param>
+        /// <returns>Fluent builder</returns>
+        ISynchronousMessageBuilderV4 WithResponseMetadata(string key, string value);
 
         /// <summary>
         /// Set request content which is serialised as JSON

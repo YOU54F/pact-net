@@ -10,6 +10,14 @@ namespace PactNet
     public interface IConfiguredSynchronousMessageVerifierV4
     {
         /// <summary>
+        /// Add metadata to the most recently configured response body
+        /// </summary>
+        /// <param name="key">metadata key</param>
+        /// <param name="value">metadata value</param>
+        /// <returns>Configured message</returns>
+        IConfiguredSynchronousMessageVerifierV4 WithResponseMetadata(string key, string value);
+
+        /// <summary>
         /// Add an additional response content body which is serialised as JSON
         /// </summary>
         /// <param name="body">Response body</param>

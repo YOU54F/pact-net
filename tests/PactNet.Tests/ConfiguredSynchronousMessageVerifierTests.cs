@@ -111,6 +111,27 @@ namespace PactNet.Tests
         }
 
         [Fact]
+        public void WithResponseMetadata_AfterResponseContent_UpdatesLatestResponseMetadataAndDriver()
+        {
+            var verifier = new ConfiguredSynchronousMessageVerifier(
+                this.mockDriver.Object,
+                this.config,
+                @"{""intValue"":1,""stringValue"":""request""}",
+                @"{""intValue"":2,""stringValue"":""response-1""}");
+
+            verifier.WithResponseMetadata("contentType", "application/json");
+
+            verifier.Verify<Message, Message>(message =>
+            {
+                message.ResponseMetadata.Should().HaveCount(1);
+                message.ResponseMetadata[0].Should().ContainKey("contentType");
+                message.ResponseMetadata[0]["contentType"].Should().Be("application/json");
+            });
+
+            this.mockDriver.Verify(d => d.WithResponseMetadata("contentType", "application/json"), Times.Once);
+        }
+
+        [Fact]
         public void VerifyWithResponse_WhenMultipleResponsesConfigured_ThrowsHelpfulException()
         {
             var verifier = new ConfiguredSynchronousMessageVerifier(

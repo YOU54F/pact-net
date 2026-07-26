@@ -66,6 +66,27 @@ namespace PactNet
         }
 
         /// <inheritdoc />
+        public IConfiguredSynchronousMessageVerifierV4 WithResponseMetadata(string key, string value)
+        {
+            if (this.responseBodies.Count == 0)
+            {
+                throw new InvalidOperationException("Response metadata can only be set after response contents have been configured");
+            }
+
+            int lastResponseIndex = this.responseMetadata.Count - 1;
+
+            if (lastResponseIndex < 0)
+            {
+                throw new InvalidOperationException("Response metadata can only be set after response contents have been configured");
+            }
+
+            this.responseMetadata[lastResponseIndex][key] = value;
+            this.driver.WithResponseMetadata(key, value);
+
+            return this;
+        }
+
+        /// <inheritdoc />
         public IConfiguredSynchronousMessageVerifierV4 WithResponseJsonContent(dynamic body)
             => this.WithResponseJsonContent(body, this.config.DefaultJsonSettings);
 

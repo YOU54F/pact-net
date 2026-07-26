@@ -50,7 +50,7 @@ namespace PactNet.Drivers.Message
         /// <param name="key">the key</param>
         /// <param name="value">the value</param>
         public void WithMetadata(string key, string value)
-            => NativeInterop.MessageWithMetadata(this.interaction, key, value);
+            => NativeInterop.MessageWithMetadata(this.interaction, key, value, 0);
 
         /// <summary>
         /// Set the contents of the message
