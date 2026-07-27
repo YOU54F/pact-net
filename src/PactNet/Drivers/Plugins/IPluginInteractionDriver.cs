@@ -13,5 +13,13 @@ namespace PactNet.Drivers.Plugins
         /// <param name="contentType">Content type</param>
         /// <param name="content">A dictionary containing the plugin content.</param>
         void WithContent(string contentType, Dictionary<string, object> content);
+
+        /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        void AddReference(string group, string name, string value);
     }
 }

@@ -19,6 +19,14 @@ namespace PactNet.Drivers.Message
         void WithMetadata(string key, string value);
 
         /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        void AddReference(string group, string name, string value);
+
+        /// <summary>
         /// Set the contents of the message
         /// </summary>
         /// <param name="contentType">the content type</param>

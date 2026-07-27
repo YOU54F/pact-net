@@ -95,6 +95,9 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_message_reify")]
         public static extern IntPtr MessageReify(InteractionHandle message);
 
+        [DllImport(DllName, EntryPoint = "pactffi_add_interaction_reference")]
+        public static extern bool AddInteractionReference(InteractionHandle interaction, string group, string name, string value);
+
         #endregion Messaging Interop Support
 
         #region Message Model Interop Support

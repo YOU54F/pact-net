@@ -80,6 +80,15 @@ namespace PactNet.Drivers.Http
             => NativeInterop.ResponseStatus(this.interaction, status).CheckInteropSuccess();
 
         /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        public void AddReference(string group, string name, string value)
+            => NativeInterop.AddInteractionReference(this.interaction, group, name, value).CheckInteropSuccess();
+
+        /// <summary>
         /// Set the request body
         /// </summary>
         /// <param name="contentType">Context type</param>

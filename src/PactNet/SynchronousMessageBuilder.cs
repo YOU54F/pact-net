@@ -72,6 +72,13 @@ namespace PactNet
         }
 
         /// <inheritdoc />
+        public ISynchronousMessageBuilderV4 AddReference(string group, string name, string value)
+        {
+            this.driver.AddReference(group, name, value);
+            return this;
+        }
+
+        /// <inheritdoc />
         public ISynchronousMessageBuilderV4 WithRequestJsonContent(dynamic body)
             => this.WithRequestJsonContent(body, this.config.DefaultJsonSettings);
 

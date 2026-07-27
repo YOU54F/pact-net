@@ -18,6 +18,5 @@ namespace PactNet.Drivers
             {
                 throw new PactFailureException("Unable to perform the given action. The interop call indicated failure");
             }
-        }
-    }
+        }    }
 }

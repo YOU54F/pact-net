@@ -52,5 +52,18 @@ namespace PactNet
             this.interactionDriver.WithContent(contentType, content);
             return this;
         }
+
+        /// <summary>
+        /// Add an interaction reference to this plugin interaction
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        public ISynchronousPluginRequestBuilderV4 AddReference(string group, string name, string value)
+        {
+            this.interactionDriver.AddReference(group, name, value);
+            return this;
+        }
     }
 }
