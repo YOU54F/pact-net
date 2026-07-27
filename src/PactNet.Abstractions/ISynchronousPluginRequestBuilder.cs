@@ -28,5 +28,14 @@ namespace PactNet
         /// <param name="contentType">Content type</param>
         /// <param name="content">A dictionary containing the plugin content.</param>
         ISynchronousPluginRequestBuilderV4 WithContent(string contentType, Dictionary<string, object> content);
+
+        /// <summary>
+        /// Add an interaction reference to this plugin interaction
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        ISynchronousPluginRequestBuilderV4 AddReference(string group, string name, string value);
     }
 }

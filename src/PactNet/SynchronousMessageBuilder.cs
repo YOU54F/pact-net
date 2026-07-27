@@ -14,7 +14,11 @@ namespace PactNet
         private readonly PactConfig config;
 
         private string requestBody;
-        private string responseBody;
+        private bool hasResponseContents;
+        private readonly Dictionary<string, string> interactionMetadata = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> pendingResponseMetadata = new Dictionary<string, string>(StringComparer.Ordinal);
+        private readonly List<string> responseBodies = new List<string>();
+        private readonly List<Dictionary<string, string>> responseMetadata = new List<Dictionary<string, string>>();
 
         /// <summary>
         /// Initialises a new instance of the <see cref="SynchronousMessageBuilder"/> class.
@@ -46,6 +50,35 @@ namespace PactNet
         }
 
         /// <inheritdoc />
+        public ISynchronousMessageBuilderV4 WithRequestMetadata(string key, string value)
+        {
+            this.interactionMetadata[key] = value;
+            this.driver.WithRequestMetadata(key, value);
+
+            return this;
+        }
+        /// <inheritdoc />
+        public ISynchronousMessageBuilderV4 WithResponseMetadata(string key, string value)
+        {
+            this.interactionMetadata[key] = value;
+            this.pendingResponseMetadata[key] = value;
+
+            if (this.hasResponseContents)
+            {
+                this.driver.WithResponseMetadata(key, value);
+            }
+
+            return this;
+        }
+
+        /// <inheritdoc />
+        public ISynchronousMessageBuilderV4 AddReference(string group, string name, string value)
+        {
+            this.driver.AddReference(group, name, value);
+            return this;
+        }
+
+        /// <inheritdoc />
         public ISynchronousMessageBuilderV4 WithRequestJsonContent(dynamic body)
             => this.WithRequestJsonContent(body, this.config.DefaultJsonSettings);
 
@@ -69,10 +102,17 @@ namespace PactNet
         {
             string serialised = JsonSerializer.Serialize(body, settings);
 
-            this.responseBody = serialised;
+            this.responseBodies.Add(serialised);
+            this.responseMetadata.Add(new Dictionary<string, string>(this.interactionMetadata, StringComparer.Ordinal));
             this.driver.WithResponseContents("application/json", serialised, 0);
+            this.hasResponseContents = true;
 
-            return new ConfiguredSynchronousMessageVerifier(this.driver, this.config, this.requestBody, this.responseBody);
+            foreach (KeyValuePair<string, string> pair in this.pendingResponseMetadata)
+            {
+                this.driver.WithResponseMetadata(pair.Key, pair.Value);
+            }
+
+            return new ConfiguredSynchronousMessageVerifier(this.driver, this.config, this.requestBody, this.interactionMetadata, this.responseBodies, this.responseMetadata);
         }
     }
 }

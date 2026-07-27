@@ -86,14 +86,17 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_message_expects_to_receive")]
         public static extern void MessageExpectsToReceive(InteractionHandle message, string description);
 
-        [DllImport(DllName, EntryPoint = "pactffi_message_with_metadata")]
-        public static extern void MessageWithMetadata(InteractionHandle message, string key, string value);
+        [DllImport(DllName, EntryPoint = "pactffi_with_metadata")]
+        public static extern void MessageWithMetadata(InteractionHandle message, string key, string value, int part);
 
         [DllImport(DllName, EntryPoint = "pactffi_message_with_contents")]
         public static extern void MessageWithContents(InteractionHandle message, string contentType, string body, UIntPtr size);
 
         [DllImport(DllName, EntryPoint = "pactffi_message_reify")]
         public static extern IntPtr MessageReify(InteractionHandle message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_add_interaction_reference")]
+        public static extern bool AddInteractionReference(InteractionHandle interaction, string group, string name, string value);
 
         #endregion Messaging Interop Support
 

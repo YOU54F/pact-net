@@ -50,7 +50,16 @@ namespace PactNet.Drivers.Message
         /// <param name="key">the key</param>
         /// <param name="value">the value</param>
         public void WithMetadata(string key, string value)
-            => NativeInterop.MessageWithMetadata(this.interaction, key, value);
+            => NativeInterop.MessageWithMetadata(this.interaction, key, value, 0);
+
+        /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        public void AddReference(string group, string name, string value)
+            => NativeInterop.AddInteractionReference(this.interaction, group, name, value).CheckInteropSuccess();
 
         /// <summary>
         /// Set the contents of the message

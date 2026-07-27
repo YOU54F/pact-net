@@ -43,6 +43,14 @@ namespace PactNet.Drivers.Http
         void WithResponseStatus(ushort status);
 
         /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        void AddReference(string group, string name, string value);
+
+        /// <summary>
         /// Set the request body
         /// </summary>
         /// <param name="contentType">Context type</param>

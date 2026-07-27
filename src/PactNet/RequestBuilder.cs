@@ -347,6 +347,16 @@ namespace PactNet
             => this.WithHeader(key, matcher);
 
         /// <summary>
+        /// Add an interaction reference to this HTTP interaction
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        IRequestBuilderV4 IRequestBuilderV4.AddReference(string group, string name, string value)
+            => this.AddReference(group, name, value);
+
+        /// <summary>
         /// Set a body which is serialised as JSON
         /// </summary>
         /// <param name="body">Request body</param>
@@ -478,6 +488,20 @@ namespace PactNet
             var serialised = JsonSerializer.Serialize(matcher, this.defaultSettings);
 
             return this.WithQuery(key, serialised);
+        }
+
+        /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        internal RequestBuilder AddReference(string group, string name, string value)
+        {
+            this.driver.AddReference(group, name, value);
+
+            return this;
         }
 
         /// <summary>

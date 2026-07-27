@@ -31,6 +31,15 @@ public interface IGrpcRequestBuilderV4
     IGrpcResponseBuilderV4 WillRespond();
 
     /// <summary>
+    /// Add an interaction reference to this gRPC interaction
+    /// </summary>
+    /// <param name="group">Reference group</param>
+    /// <param name="name">Reference name</param>
+    /// <param name="value">Reference value</param>
+    /// <returns>Fluent builder</returns>
+    IGrpcRequestBuilderV4 AddReference(string group, string name, string value);
+
+    /// <summary>
     /// Configure grpc request
     /// </summary>
     /// <param name="protoFilePath"></param>
@@ -66,6 +75,15 @@ internal class GrpcRequestBuilder(ISynchronousPluginRequestBuilderV4 requestBuil
     public IGrpcRequestBuilderV4 Given(string description, string name, string value)
     {
         requestBuilder.Given(description, name, value);
+        return this;
+    }
+
+    /// <summary>
+    /// <inheritdoc cref="AddReference(string, string, string)"/>
+    /// </summary>
+    public IGrpcRequestBuilderV4 AddReference(string group, string name, string value)
+    {
+        requestBuilder.AddReference(group, name, value);
         return this;
     }
 

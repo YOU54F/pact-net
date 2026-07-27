@@ -67,6 +67,10 @@ namespace PactNet
             => WithMetadata(key, value);
 
         /// <inheritdoc cref="IMessageBuilderV4"/>
+        IMessageBuilderV4 IMessageBuilderV4.AddReference(string group, string name, string value)
+            => AddReference(group, name, value);
+
+        /// <inheritdoc cref="IMessageBuilderV4"/>
         IConfiguredMessageVerifier IMessageBuilderV4.WithJsonContent(dynamic content)
             => WithJsonContent(content);
 
@@ -115,6 +119,20 @@ namespace PactNet
         internal MessageBuilder WithMetadata(string key, string value)
         {
             this.driver.WithMetadata(key, value);
+
+            return this;
+        }
+
+        /// <summary>
+        /// Add an interaction reference
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        internal MessageBuilder AddReference(string group, string name, string value)
+        {
+            this.driver.AddReference(group, name, value);
 
             return this;
         }

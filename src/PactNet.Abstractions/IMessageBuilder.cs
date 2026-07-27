@@ -76,6 +76,15 @@ namespace PactNet
         IMessageBuilderV4 WithMetadata(string key, string value);
 
         /// <summary>
+        /// Add an interaction reference to this message interaction
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        IMessageBuilderV4 AddReference(string group, string name, string value);
+
+        /// <summary>
         /// Set message content which is serialised as JSON
         /// </summary>
         /// <param name="body">Message body</param>

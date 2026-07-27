@@ -295,6 +295,15 @@ namespace PactNet
         IRequestBuilderV4 WithHeader(string key, IMatcher matcher);
 
         /// <summary>
+        /// Add an interaction reference to this HTTP interaction
+        /// </summary>
+        /// <param name="group">Reference group</param>
+        /// <param name="name">Reference name</param>
+        /// <param name="value">Reference value</param>
+        /// <returns>Fluent builder</returns>
+        IRequestBuilderV4 AddReference(string group, string name, string value);
+
+        /// <summary>
         /// Set a body which is serialised as JSON
         /// </summary>
         /// <param name="body">Request body</param>
