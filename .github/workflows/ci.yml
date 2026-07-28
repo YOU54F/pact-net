@@ -22,30 +22,30 @@ jobs:
   build-dotnet:
     name: "Build and Test (dotnet)"
     strategy:
+      fail-fast: false
       matrix:
         os:
           - windows-latest
           - ubuntu-latest
-          - macos-13
-          - macos-14
+          - macos-15-intel
         include:
           - arch: x64
           - arch: ARM64
-            os: macos-14
+            os: macos-15
           - arch: ARM64
             os: ubuntu-24.04-arm
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
 
       - name: Cache FFI dependencies
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           key: cache-ffi-${{ hashFiles('build/download-native-libs.sh') }}
           enableCrossOsArchive: true
@@ -73,20 +73,57 @@ jobs:
 
       - name: Upload Artifact
         if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nupkgs
           path: ./dist/*.*
 
+  build-dotnet-containers:
+    runs-on: ubuntu-latest
+    name: ${{ matrix.os }}-${{ matrix.distro }}-build-dotnet-container
+    strategy:
+      fail-fast: false
+      matrix:
+        os: 
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        distro:
+          - "mcr.microsoft.com/dotnet/sdk:8.0"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Docker dependencies
+        id: docker_commands
+        shell: bash
+        run: |
+            echo "deps=apt-get update --yes && apt-get install -y protobuf-compiler xz-utils &&" >> "$GITHUB_OUTPUT"
+  
+      - name: Restore, Build & Test
+        run: |
+          docker run \
+            --rm \
+            -v $(pwd):/${{ github.workspace }} \
+            -w ${{ github.workspace }} \
+            --entrypoint /bin/sh \
+            ${{ matrix.distro }} \
+            -c '${{ steps.docker_commands.outputs.deps }} \
+            build/download-native-libs.sh && \
+            dotnet restore && dotnet build --no-restore && \
+            dotnet test --no-build --verbosity normal'      
+
   release:
-    needs: build-dotnet
+    needs: [
+      build-dotnet,
+      build-dotnet-containers
+      ]
     if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
 
@@ -105,6 +142,6 @@ jobs:
         run: dotnet nuget push ./dist/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*.*
