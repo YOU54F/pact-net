@@ -83,9 +83,9 @@ namespace PactNet.Tests
                        .Given("a provider state")
                        .WithRequest(HttpMethod.Post, "/things")
                     //    regression in v0.5.4 - requires comma sep headers to be added singly
-                       .WithHeader("X-Request", "request1, request2")
-                    //    .WithHeader("X-Request", "request1")
-                    //    .WithHeader("X-Request", "request2")
+                    //    .WithHeader("X-Request", "request1, request2")
+                       .WithHeader("X-Request", "request1")
+                       .WithHeader("X-Request", "request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
