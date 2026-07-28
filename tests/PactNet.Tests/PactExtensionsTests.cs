@@ -95,10 +95,7 @@ namespace PactNet.Tests
                        .WithHeader("X-Response", "response2")
                        .WithJsonBody(this.example);
 
-            await builder.VerifyAsync(async ctx =>
-            {
-                await PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings);
-            });
+            await builder.VerifyAsync(ctx => PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings));
 
             string actualPact = File.ReadAllText("PactExtensionsTests-Consumer-V2-PactExtensionsTests-Provider.json").TrimEnd();
             string expectedPact = File.ReadAllText("data/v2-consumer-integration.json").TrimEnd();
@@ -131,10 +128,7 @@ namespace PactNet.Tests
                        .WithHeader("X-Response", "response2")
                        .WithJsonBody(this.example);
 
-            await builder.VerifyAsync(async ctx =>
-            {
-                await PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings);
-            });
+            await builder.VerifyAsync(ctx => PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings));
 
             string actualPact = File.ReadAllText("PactExtensionsTests-Consumer-V3-PactExtensionsTests-Provider.json").TrimEnd();
             string expectedPact = File.ReadAllText("data/v3-consumer-integration.json").TrimEnd();
@@ -168,10 +162,7 @@ namespace PactNet.Tests
                        .WithHeader("X-Response", "response2")
                        .WithJsonBody(this.example);
 
-            await builder.VerifyAsync(async ctx =>
-            {
-                await PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings);
-            });
+            await builder.VerifyAsync(ctx => PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings));
 
             string actualPact = File.ReadAllText("PactExtensionsTests-Consumer-V4-PactExtensionsTests-Provider.json").TrimEnd();
             string expectedPact = File.ReadAllText("data/v4-consumer-integration.json").TrimEnd();
@@ -259,10 +250,7 @@ namespace PactNet.Tests
                     .WithHeader("X-Response", "response2")
                     .WithJsonBody(this.example);
 
-            await http.VerifyAsync(async ctx =>
-            {
-                await PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings);
-            });
+            await http.VerifyAsync(ctx => PerformRequestAsync(ctx, this.example, this.config.DefaultJsonSettings));
 
             // message interaction
             IMessagePactBuilderV4 message = pact.WithMessageInteractions();
