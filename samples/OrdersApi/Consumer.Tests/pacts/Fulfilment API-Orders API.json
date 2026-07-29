@@ -158,8 +158,8 @@
   ],
   "metadata": {
     "pactRust": {
-      "ffi": "0.4.26",
-      "models": "1.2.7"
+      "ffi": "0.4.24",
+      "models": "1.2.6"
     },
     "pactSpecification": {
       "version": "4.0"
