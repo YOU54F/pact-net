@@ -19,92 +19,137 @@ env:
   NUGET_FEED: https://api.nuget.org/v3/index.json
 
 jobs:
-  build-dotnet:
-    name: "Build and Test (dotnet)"
-    strategy:
-      matrix:
-        os:
-          - windows-latest
-          - ubuntu-latest
-          - macos-13
-          - macos-14
-        include:
-          - arch: x64
-          - arch: ARM64
-            os: macos-14
-          - arch: ARM64
-            os: ubuntu-24.04-arm
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v4
+  # build-dotnet:
+  #   name: "Build and Test (dotnet)"
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - windows-latest
+  #         - ubuntu-latest
+  #         - macos-15-intel
+  #       include:
+  #         - arch: x64
+  #         - arch: ARM64
+  #           os: macos-15
+  #         - arch: ARM64
+  #           os: ubuntu-24.04-arm
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v7
 
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
+  #     - name: Setup .NET Core SDK
+  #       uses: actions/setup-dotnet@v6
+  #       with:
+  #         dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
 
-      - name: Cache FFI dependencies
-        id: cache
-        uses: actions/cache@v4
-        with:
-          key: cache-ffi-${{ hashFiles('build/download-native-libs.sh') }}
-          enableCrossOsArchive: true
-          path: |
-            build/linux
-            build/macos
-            build/windows
+  #     - name: Cache FFI dependencies
+  #       id: cache
+  #       uses: actions/cache@v6
+  #       with:
+  #         key: cache-ffi-${{ hashFiles('build/download-native-libs.sh') }}
+  #         enableCrossOsArchive: true
+  #         path: |
+  #           build/linux
+  #           build/macos
+  #           build/windows
 
-      - name: Pull interop dependencies
-        run: bash -c "build/download-native-libs.sh"
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+  #     - name: Pull interop dependencies
+  #       run: bash -c "build/download-native-libs.sh"
+  #       if: ${{ steps.cache.outputs.cache-hit != 'true' }}
 
-      - name: Restore
-        run: dotnet restore
+  #     - name: Restore
+  #       run: dotnet restore
 
-      - name: Build
-        run: dotnet build --no-restore
+  #     - name: Build
+  #       run: dotnet build --no-restore
 
-      - name: Test
-        run: dotnet test --no-build --verbosity normal -- RunConfiguration.TargetPlatform=${{matrix.arch}}
+  #     - name: Test
+  #       run: dotnet test --no-build --verbosity normal -- RunConfiguration.TargetPlatform=${{matrix.arch}}
 
-      - name: Pack
-        if: matrix.os == 'windows-latest'
-        run: dotnet pack --verbosity normal -c Release --no-restore --include-source --version-suffix alpha.${{ github.run_number }} -o ./dist
+  #     - name: Pack
+  #       if: matrix.os == 'windows-latest'
+  #       run: dotnet pack --verbosity normal -c Release --no-restore --include-source --version-suffix alpha.${{ github.run_number }} -o ./dist
 
-      - name: Upload Artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: nupkgs
-          path: ./dist/*.*
+  #     - name: Upload Artifact
+  #       if: matrix.os == 'windows-latest'
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: nupkgs
+  #         path: ./dist/*.*
 
-  release:
-    needs: build-dotnet
-    if: github.ref_type == 'tag'
+  build-dotnet-containers:
     runs-on: ubuntu-latest
+    name: ${{ matrix.os }}-${{ matrix.distro }}-build-dotnet-container
+    strategy:
+      fail-fast: false
+      matrix:
+        os: 
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
+        distro:
+          - "mcr.microsoft.com/dotnet/sdk:8.0"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.21"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.22"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.23"
+          - "mcr.microsoft.com/dotnet/sdk:8.0-alpine3.24"
+
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
-
-      - name: Pull interop dependencies
-        run: bash -c "build/download-native-libs.sh"
-
-      - name: Pack
+      - name: Docker dependencies
+        id: docker_commands
+        shell: bash
         run: |
-          VERSION="${{ github.ref_name }}"
-          echo "Version: $VERSION"
-          dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet/PactNet.csproj
-          dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet.Abstractions/PactNet.Abstractions.csproj
-          dotnet pack -c Release --include-source -o ./dist src/PactNet.Output.Xunit/PactNet.Output.Xunit.csproj
+          if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
+            echo "deps=apk add --no-cache curl bash gzip && " >> "$GITHUB_OUTPUT"
+          else
+            echo "deps=" >> "$GITHUB_OUTPUT"
+          fi
+  
+      - name: Restore, Build & Test
+        run: |
+          docker run \
+            --rm \
+            -v $(pwd):/${{ github.workspace }} \
+            -w ${{ github.workspace }} \
+            --entrypoint /bin/sh \
+            ${{ matrix.distro }} \
+            -c '${{ steps.docker_commands.outputs.deps }} \
+            build/download-native-libs.sh && \
+            dotnet restore && dotnet build --no-restore && \
+            dotnet test --no-build --verbosity normal'      
 
-      - name: Push
-        run: dotnet nuget push ./dist/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
+  # release:
+  #   needs: [
+  #     # build-dotnet,
+  #     build-dotnet-containers
+  #     ]
+  #   if: github.ref_type == 'tag'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v7
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/*.*
+  #     - name: Setup .NET Core
+  #       uses: actions/setup-dotnet@v6
+  #       with:
+  #         dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
+
+  #     - name: Pull interop dependencies
+  #       run: bash -c "build/download-native-libs.sh"
+
+  #     - name: Pack
+  #       run: |
+  #         VERSION="${{ github.ref_name }}"
+  #         echo "Version: $VERSION"
+  #         dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet/PactNet.csproj
+  #         dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet.Abstractions/PactNet.Abstractions.csproj
+  #         dotnet pack -c Release --include-source -o ./dist src/PactNet.Output.Xunit/PactNet.Output.Xunit.csproj
+
+  #     - name: Push
+  #       run: dotnet nuget push ./dist/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
+
+  #     - name: Release
+  #       uses: softprops/action-gh-release@v3
+  #       with:
+  #         files: dist/*.*
