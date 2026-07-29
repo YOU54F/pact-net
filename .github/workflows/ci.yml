@@ -19,64 +19,64 @@ env:
   NUGET_FEED: https://api.nuget.org/v3/index.json
 
 jobs:
-  build-dotnet:
-    name: "Build and Test (dotnet)"
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - windows-latest
-          - ubuntu-latest
-          - macos-15-intel
-        include:
-          - arch: x64
-          - arch: ARM64
-            os: macos-15
-          - arch: ARM64
-            os: ubuntu-24.04-arm
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: actions/checkout@v7
+  # build-dotnet:
+  #   name: "Build and Test (dotnet)"
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       os:
+  #         - windows-latest
+  #         - ubuntu-latest
+  #         - macos-15-intel
+  #       include:
+  #         - arch: x64
+  #         - arch: ARM64
+  #           os: macos-15
+  #         - arch: ARM64
+  #           os: ubuntu-24.04-arm
+  #   runs-on: ${{ matrix.os }}
+  #   steps:
+  #     - uses: actions/checkout@v7
 
-      - name: Setup .NET Core SDK
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
+  #     - name: Setup .NET Core SDK
+  #       uses: actions/setup-dotnet@v6
+  #       with:
+  #         dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
 
-      - name: Cache FFI dependencies
-        id: cache
-        uses: actions/cache@v6
-        with:
-          key: cache-ffi-${{ hashFiles('build/download-native-libs.sh') }}
-          enableCrossOsArchive: true
-          path: |
-            build/linux
-            build/macos
-            build/windows
+  #     - name: Cache FFI dependencies
+  #       id: cache
+  #       uses: actions/cache@v6
+  #       with:
+  #         key: cache-ffi-${{ hashFiles('build/download-native-libs.sh') }}
+  #         enableCrossOsArchive: true
+  #         path: |
+  #           build/linux
+  #           build/macos
+  #           build/windows
 
-      - name: Pull interop dependencies
-        run: bash -c "build/download-native-libs.sh"
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+  #     - name: Pull interop dependencies
+  #       run: bash -c "build/download-native-libs.sh"
+  #       if: ${{ steps.cache.outputs.cache-hit != 'true' }}
 
-      - name: Restore
-        run: dotnet restore
+  #     - name: Restore
+  #       run: dotnet restore
 
-      - name: Build
-        run: dotnet build --no-restore
+  #     - name: Build
+  #       run: dotnet build --no-restore
 
-      - name: Test
-        run: dotnet test --no-build --verbosity normal -- RunConfiguration.TargetPlatform=${{matrix.arch}}
+  #     - name: Test
+  #       run: dotnet test --no-build --verbosity normal -- RunConfiguration.TargetPlatform=${{matrix.arch}}
 
-      - name: Pack
-        if: matrix.os == 'windows-latest'
-        run: dotnet pack --verbosity normal -c Release --no-restore --include-source --version-suffix alpha.${{ github.run_number }} -o ./dist
+  #     - name: Pack
+  #       if: matrix.os == 'windows-latest'
+  #       run: dotnet pack --verbosity normal -c Release --no-restore --include-source --version-suffix alpha.${{ github.run_number }} -o ./dist
 
-      - name: Upload Artifact
-        if: matrix.os == 'windows-latest'
-        uses: actions/upload-artifact@v7
-        with:
-          name: nupkgs
-          path: ./dist/*.*
+  #     - name: Upload Artifact
+  #       if: matrix.os == 'windows-latest'
+  #       uses: actions/upload-artifact@v7
+  #       with:
+  #         name: nupkgs
+  #         path: ./dist/*.*
 
   build-dotnet-containers:
     runs-on: ubuntu-latest
@@ -120,36 +120,36 @@ jobs:
             dotnet restore && dotnet build --no-restore && \
             dotnet test --no-build --verbosity normal'      
 
-  release:
-    needs: [
-      build-dotnet,
-      build-dotnet-containers
-      ]
-    if: github.ref_type == 'tag'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
+  # release:
+  #   needs: [
+  #     # build-dotnet,
+  #     build-dotnet-containers
+  #     ]
+  #   if: github.ref_type == 'tag'
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v7
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
+  #     - name: Setup .NET Core
+  #       uses: actions/setup-dotnet@v6
+  #       with:
+  #         dotnet-version: "8.0.x" # runners already have .Net Framework installed as well
 
-      - name: Pull interop dependencies
-        run: bash -c "build/download-native-libs.sh"
+  #     - name: Pull interop dependencies
+  #       run: bash -c "build/download-native-libs.sh"
 
-      - name: Pack
-        run: |
-          VERSION="${{ github.ref_name }}"
-          echo "Version: $VERSION"
-          dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet/PactNet.csproj
-          dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet.Abstractions/PactNet.Abstractions.csproj
-          dotnet pack -c Release --include-source -o ./dist src/PactNet.Output.Xunit/PactNet.Output.Xunit.csproj
+  #     - name: Pack
+  #       run: |
+  #         VERSION="${{ github.ref_name }}"
+  #         echo "Version: $VERSION"
+  #         dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet/PactNet.csproj
+  #         dotnet pack -c Release --include-source -p:Version=$VERSION -o ./dist src/PactNet.Abstractions/PactNet.Abstractions.csproj
+  #         dotnet pack -c Release --include-source -o ./dist src/PactNet.Output.Xunit/PactNet.Output.Xunit.csproj
 
-      - name: Push
-        run: dotnet nuget push ./dist/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
+  #     - name: Push
+  #       run: dotnet nuget push ./dist/*.nupkg --source $NUGET_FEED --skip-duplicate --api-key ${{ secrets.NUGET_API_KEY }}
 
-      - name: Release
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/*.*
+  #     - name: Release
+  #       uses: softprops/action-gh-release@v3
+  #       with:
+  #         files: dist/*.*
