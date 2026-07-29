@@ -68,8 +68,18 @@ namespace PactNet.Drivers
         public string Reify()
         {
             IntPtr pointer = NativeInterop.MessageReify(this.interaction);
-            string body = Marshal.PtrToStringAnsi(pointer);
-            return body;
+            try
+            {
+                string body = Marshal.PtrToStringAnsi(pointer);
+                return body;
+            }
+            finally
+            {
+                if (pointer != IntPtr.Zero)
+                {
+                    NativeInterop.FreeString(pointer);
+                }
+            }
         }
     }
 }
