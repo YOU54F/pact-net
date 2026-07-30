@@ -14,10 +14,8 @@ namespace PactNet.Verifier
     internal class InteropVerifierProvider : IVerifierProvider
     {
         private readonly PactVerifierConfig config;
-        private readonly object sync = new object();
 
         private IntPtr handle;
-        private bool disposed;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="InteropVerifierProvider"/> class.
@@ -33,23 +31,18 @@ namespace PactNet.Verifier
         /// </summary>
         public void Initialise()
         {
-            lock (this.sync)
+            NativeInterop.LogToBuffer(config.LogLevel switch
             {
-                this.ThrowIfDisposed();
+                PactLogLevel.Trace => LevelFilter.Trace,
+                PactLogLevel.Debug => LevelFilter.Debug,
+                PactLogLevel.Information => LevelFilter.Info,
+                PactLogLevel.Warn => LevelFilter.Warn,
+                PactLogLevel.Error => LevelFilter.Error,
+                PactLogLevel.None => LevelFilter.Off,
+                _ => throw new ArgumentOutOfRangeException(nameof(config.LogLevel), config.LogLevel, "Invalid log level")
+            });
 
-                NativeInterop.LogToBuffer(config.LogLevel switch
-                {
-                    PactLogLevel.Trace => LevelFilter.Trace,
-                    PactLogLevel.Debug => LevelFilter.Debug,
-                    PactLogLevel.Information => LevelFilter.Info,
-                    PactLogLevel.Warn => LevelFilter.Warn,
-                    PactLogLevel.Error => LevelFilter.Error,
-                    PactLogLevel.None => LevelFilter.Off,
-                    _ => throw new ArgumentOutOfRangeException(nameof(config.LogLevel), config.LogLevel, "Invalid log level")
-                });
-
-                this.handle = NativeInterop.VerifierNewForApplication("pact-net", typeof(InteropVerifierProvider).Assembly.GetName().Version.ToString());
-            }
+            this.handle = NativeInterop.VerifierNewForApplication("pact-net", typeof(InteropVerifierProvider).Assembly.GetName().Version.ToString());
         }
 
         /// <summary>
@@ -62,11 +55,7 @@ namespace PactNet.Verifier
         /// <param name="path">Provider URI path</param>
         public void SetProviderInfo(string name, string scheme, string host, ushort port, string path)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetProviderInfo(this.handle, name, scheme, host, port, path);
-            }
+            NativeInterop.VerifierSetProviderInfo(this.handle, name, scheme, host, port, path);
         }
 
         /// <summary>
@@ -78,11 +67,7 @@ namespace PactNet.Verifier
         /// <param name="scheme">Scheme</param>
         public void AddTransport(string protocol, ushort port, string path, string scheme)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.AddProviderTransport(this.handle, protocol, port, path, scheme);
-            }
+            NativeInterop.AddProviderTransport(this.handle, protocol, port, path, scheme);
         }
 
         /// <summary>
@@ -93,11 +78,7 @@ namespace PactNet.Verifier
         /// <param name="noState">Filter to only interactions with (false) or without (true) provider state</param>
         public void SetFilterInfo(string description = null, string state = null, bool? noState = null)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetFilterInfo(this.handle, description, state, ToSafeByte(noState));
-            }
+            NativeInterop.VerifierSetFilterInfo(this.handle, description, state, ToSafeByte(noState));
         }
 
         /// <summary>
@@ -108,11 +89,7 @@ namespace PactNet.Verifier
         /// <param name="body">Use request body for provider state requests instead of query params</param>
         public void SetProviderState(Uri url, bool teardown, bool body)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetProviderState(this.handle, url.AbsoluteUri, ToSafeByte(teardown), ToSafeByte(body));
-            }
+            NativeInterop.VerifierSetProviderState(this.handle, url.AbsoluteUri, ToSafeByte(teardown), ToSafeByte(body));
         }
 
         /// <summary>
@@ -123,13 +100,10 @@ namespace PactNet.Verifier
         public void SetVerificationOptions(bool disableSslVerification, TimeSpan requestTimeout)
         {
             uint timeout = Convert.ToUInt32(requestTimeout.TotalMilliseconds);
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetVerificationOptions(this.handle,
-                                                             ToSafeByte(disableSslVerification),
-                                                             timeout);
-            }
+
+            NativeInterop.VerifierSetVerificationOptions(this.handle,
+                                                         ToSafeByte(disableSslVerification),
+                                                         timeout);
         }
 
         /// <summary>
@@ -141,16 +115,12 @@ namespace PactNet.Verifier
         /// <param name="providerBranch">Provider branch</param>
         public void SetPublishOptions(string providerVersion, Uri buildUrl, ICollection<string> providerTags, string providerBranch)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetPublishOptions(this.handle,
-                                                        providerVersion,
-                                                        buildUrl?.AbsoluteUri,
-                                                        providerTags.ToArray(),
-                                                        (ushort)providerTags.Count,
-                                                        providerBranch);
-            }
+            NativeInterop.VerifierSetPublishOptions(this.handle,
+                                                    providerVersion,
+                                                    buildUrl?.AbsoluteUri,
+                                                    providerTags.ToArray(),
+                                                    (ushort)providerTags.Count,
+                                                    providerBranch);
         }
 
         /// <summary>
@@ -159,11 +129,7 @@ namespace PactNet.Verifier
         /// <param name="consumerFilters">Consumer filters</param>
         public void SetConsumerFilters(ICollection<string> consumerFilters)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierSetConsumerFilters(this.handle, consumerFilters.ToArray(), (ushort)consumerFilters.Count);
-            }
+            NativeInterop.VerifierSetConsumerFilters(this.handle, consumerFilters.ToArray(), (ushort)consumerFilters.Count);
         }
 
         /// <summary>
@@ -175,11 +141,7 @@ namespace PactNet.Verifier
         /// <returns>Fluent builder</returns>
         public void AddCustomHeader(string name, string value)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.AddCustomHeader(this.handle, name, value);
-            }
+            NativeInterop.AddCustomHeader(this.handle, name, value);
         }
 
         /// <summary>
@@ -188,11 +150,7 @@ namespace PactNet.Verifier
         /// <param name="file">File</param>
         public void AddFileSource(FileInfo file)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierAddFileSource(this.handle, file.FullName);
-            }
+            NativeInterop.VerifierAddFileSource(this.handle, file.FullName);
         }
 
         /// <summary>
@@ -202,11 +160,7 @@ namespace PactNet.Verifier
         /// <remarks>Can be used with <see cref="IVerifierProvider.SetConsumerFilters"/> to filter the files in the directory</remarks>
         public void AddDirectorySource(DirectoryInfo directory)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierAddDirectorySource(this.handle, directory.FullName);
-            }
+            NativeInterop.VerifierAddDirectorySource(this.handle, directory.FullName);
         }
 
         /// <summary>
@@ -218,11 +172,7 @@ namespace PactNet.Verifier
         /// <param name="token">Authentication token</param>
         public void AddUrlSource(Uri url, string username, string password, string token)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierUrlSource(this.handle, url.AbsoluteUri, username, password, token);
-            }
+            NativeInterop.VerifierUrlSource(this.handle, url.AbsoluteUri, username, password, token);
         }
 
         /// <summary>
@@ -249,24 +199,20 @@ namespace PactNet.Verifier
                                     ICollection<string> consumerVersionSelectors,
                                     ICollection<string> consumerVersionTags)
         {
-            lock (this.sync)
-            {
-                this.ThrowIfDisposed();
-                NativeInterop.VerifierBrokerSourceWithSelectors(this.handle,
-                                                                url.AbsoluteUri,
-                                                                username,
-                                                                password,
-                                                                token,
-                                                                ToSafeByte(enablePending),
-                                                                includeWipPactsSince?.ToString("yyyy-MM-dd"),
-                                                                providerTags.ToArray(),
-                                                                (ushort)providerTags.Count,
-                                                                providerBranch,
-                                                                consumerVersionSelectors.ToArray(),
-                                                                (ushort)consumerVersionSelectors.Count,
-                                                                consumerVersionTags.ToArray(),
-                                                                (ushort)consumerVersionTags.Count);
-            }
+            NativeInterop.VerifierBrokerSourceWithSelectors(this.handle,
+                                                            url.AbsoluteUri,
+                                                            username,
+                                                            password,
+                                                            token,
+                                                            ToSafeByte(enablePending),
+                                                            includeWipPactsSince?.ToString("yyyy-MM-dd"),
+                                                            providerTags.ToArray(),
+                                                            (ushort)providerTags.Count,
+                                                            providerBranch,
+                                                            consumerVersionSelectors.ToArray(),
+                                                            (ushort)consumerVersionSelectors.Count,
+                                                            consumerVersionTags.ToArray(),
+                                                            (ushort)consumerVersionTags.Count);
         }
 
         /// <summary>
@@ -275,31 +221,26 @@ namespace PactNet.Verifier
         /// <exception cref="PactFailureException">Verification failed</exception>
         public void Execute()
         {
-            lock (this.sync)
+            int result = NativeInterop.VerifierExecute(this.handle);
+
+            if (result == 0)
             {
-                this.ThrowIfDisposed();
-
-                int result = NativeInterop.VerifierExecute(this.handle);
-
-                if (result == 0)
-                {
-                    this.config.WriteLine("Pact verification successful\n");
-                    this.PrintOutputUnsafe();
-                    return;
-                }
-
-                this.config.WriteLine("Pact verification failed\n");
-                this.PrintOutputUnsafe();
-
-                string error = result switch
-                {
-                    1 => throw new PactVerificationFailedException("Pact verification failed"),
-                    2 => "Failed to run the verification",
-                    _ => $"An unknown error occurred: {result}"
-                };
-
-                throw new PactFailureException(error);
+                this.config.WriteLine("Pact verification successful\n");
+                this.PrintOutput();
+                return;
             }
+
+            this.config.WriteLine("Pact verification failed\n");
+            this.PrintOutput();
+
+            string error = result switch
+            {
+                1 => throw new PactVerificationFailedException("Pact verification failed"),
+                2 => "Failed to run the verification",
+                _ => $"An unknown error occurred: {result}"
+            };
+
+            throw new PactFailureException(error);
         }
 
         /// <summary>
@@ -307,7 +248,7 @@ namespace PactNet.Verifier
         /// </summary>
         public void Dispose()
         {
-            this.Dispose(true);
+            this.ReleaseUnmanagedResources();
             GC.SuppressFinalize(this);
         }
 
@@ -316,26 +257,20 @@ namespace PactNet.Verifier
         /// </summary>
         ~InteropVerifierProvider()
         {
-            this.Dispose(false);
+            this.ReleaseUnmanagedResources();
         }
 
-        private void Dispose(bool disposing)
+        /// <summary>
+        /// Release unmanaged resources
+        /// </summary>
+        private void ReleaseUnmanagedResources()
         {
-            lock (this.sync)
+            if (this.handle != IntPtr.Zero)
             {
-                if (this.disposed)
-                {
-                    return;
-                }
-
-                if (this.handle != IntPtr.Zero)
-                {
-                    NativeInterop.VerifierShutdown(this.handle);
-                    this.handle = IntPtr.Zero;
-                }
-
-                this.disposed = true;
+                NativeInterop.VerifierShutdown(this.handle);
             }
+
+            this.handle = IntPtr.Zero;
         }
 
         /// <summary>
@@ -353,24 +288,13 @@ namespace PactNet.Verifier
         /// <summary>
         /// Print output and logs of the verifier
         /// </summary>
-        private void PrintOutputUnsafe()
+        private void PrintOutput()
         {
             IntPtr outputPtr = NativeInterop.VerifierOutput(this.handle, 1);
 
-            string output;
-            try
-            {
-                output = outputPtr == IntPtr.Zero
-                             ? "ERROR: Unable to retrieve verifier output"
-                             : Marshal.PtrToStringAnsi(outputPtr);
-            }
-            finally
-            {
-                if (outputPtr != IntPtr.Zero)
-                {
-                    NativeInterop.FreeString(outputPtr);
-                }
-            }
+            string output = outputPtr == IntPtr.Zero
+                                ? "ERROR: Unable to retrieve verifier output"
+                                : Marshal.PtrToStringAnsi(outputPtr);
 
             this.config.WriteLine("Verifier Output");
             this.config.WriteLine("---------------");
@@ -378,32 +302,13 @@ namespace PactNet.Verifier
 
             IntPtr logsPtr = NativeInterop.VerifierLogs(this.handle);
 
-            string logs;
-            try
-            {
-                logs = logsPtr == IntPtr.Zero
-                           ? "ERROR: Unable to retrieve verifier logs"
-                           : Marshal.PtrToStringAnsi(logsPtr);
-            }
-            finally
-            {
-                if (logsPtr != IntPtr.Zero)
-                {
-                    NativeInterop.FreeString(logsPtr);
-                }
-            }
+            string logs = logsPtr == IntPtr.Zero
+                              ? "ERROR: Unable to retrieve verifier logs"
+                              : Marshal.PtrToStringAnsi(logsPtr);
 
             this.config.WriteLine("Verifier Logs");
             this.config.WriteLine("-------------");
             this.config.WriteLine(logs);
-        }
-
-        private void ThrowIfDisposed()
-        {
-            if (this.disposed)
-            {
-                throw new ObjectDisposedException(nameof(InteropVerifierProvider));
-            }
         }
     }
 }
