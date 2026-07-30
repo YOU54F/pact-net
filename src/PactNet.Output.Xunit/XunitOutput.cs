@@ -1,4 +1,5 @@
-﻿using PactNet.Infrastructure.Outputters;
+﻿using System;
+using PactNet.Infrastructure.Outputters;
 using Xunit.Abstractions;
 
 namespace PactNet.Output.Xunit
@@ -23,6 +24,21 @@ namespace PactNet.Output.Xunit
         /// Write a line to the output
         /// </summary>
         /// <param name="line">Line to write</param>
-        public void WriteLine(string line) => this.output.WriteLine(line);
+        public void WriteLine(string line)
+        {
+            try
+            {
+                this.output.WriteLine(line);
+            }
+            catch (ObjectDisposedException)
+            {
+                // xUnit output helper may also be disposed during teardown.
+            }
+            catch (InvalidOperationException)
+            {
+                // xUnit can throw when asynchronous/background work logs after the test has been torn down.
+                // Logging should never fail the verifier flow.
+            }
+        }
     }
 }
