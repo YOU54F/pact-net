@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using FluentAssertions;
 using FluentAssertions.Extensions;
 using PactNet.Exceptions;
@@ -74,6 +75,56 @@ namespace PactNet.Tests.Verifier
             Action action = () => provider.Execute();
 
             action.Should().Throw<PactVerificationFailedException>();
+        }
+
+        [Fact]
+        public void Dispose_CalledTwice_DoesNotThrow()
+        {
+            var provider = new InteropVerifierProvider(new PactVerifierConfig
+            {
+                LogLevel = PactLogLevel.Trace,
+                Outputters = new[] { new XunitOutput(this.output) }
+            });
+
+            provider.Initialise();
+
+            provider.Dispose();
+            Action secondDispose = provider.Dispose;
+
+            secondDispose.Should().NotThrow();
+        }
+
+        [Fact]
+        public async Task Execute_And_Dispose_Concurrently_DoesNotCrash()
+        {
+            for (int i = 0; i < 25; i++)
+            {
+                var provider = new InteropVerifierProvider(new PactVerifierConfig
+                {
+                    LogLevel = PactLogLevel.Trace,
+                    Outputters = new[] { new XunitOutput(this.output) }
+                });
+
+                provider.Initialise();
+                provider.SetProviderInfo("integration-test", "http", "localhost", 12684, "/path");
+                provider.AddFileSource(new FileInfo("data/v2-consumer-integration.json"));
+
+                Task verifyTask = Task.Run(() =>
+                {
+                    try
+                    {
+                        provider.Execute();
+                    }
+                    catch (Exception ex) when (ex is PactFailureException || ex is PactVerificationFailedException || ex is ObjectDisposedException)
+                    {
+                        // Expected outcomes in this race test: verification-level failures or disposal race.
+                    }
+                });
+
+                Task disposeTask = Task.Run(provider.Dispose);
+
+                await Task.WhenAll(verifyTask, disposeTask);
+            }
         }
     }
 }
