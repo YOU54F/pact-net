@@ -99,7 +99,7 @@ namespace PactNet.Interop
         public static extern IntPtr VerifierNewForApplication(string name, string version);
 
         [DllImport(DllName, EntryPoint = "pactffi_verifier_shutdown")]
-        public static extern void VerifierShutdown(IntPtr handle);
+        public static extern IntPtr VerifierShutdown(IntPtr handle);
 
         [DllImport(DllName, EntryPoint = "pactffi_verifier_set_provider_info")]
         public static extern void VerifierSetProviderInfo(IntPtr handle, string name, string scheme, string host, ushort port, string path);
