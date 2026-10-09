@@ -27,6 +27,17 @@ namespace PactNet.Drivers.Plugins
             return new PluginInteractionDriver(interaction);
         }
 
+        public IHttpPluginInteractionDriver NewHttpPluginInteraction(string description)
+        {
+            InteractionHandle interaction = NativeInterop.NewInteraction(this.pact, description);
+            return new HttpPluginInteractionDriver(interaction);
+        }
+
+        public IAsynchronousPluginInteractionDriver NewAsynchronousPluginInteraction(string description)
+        {
+            InteractionHandle interaction = NativeInterop.NewMessageInteraction(this.pact, description);
+            return new AsynchronousPluginInteractionDriver(this.pact, interaction);
+        }
 
         /// <summary>
         /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
