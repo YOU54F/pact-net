@@ -155,5 +155,20 @@ namespace PactNet
                 pluginName, pluginVersion, PactSpecification.V4);
             return new HttpPluginPactBuilder(pluginDriver, pact.Config, port, host);
         }
+
+        /// <summary>Create asynchronous plugin messages without a mock-server transport.</summary>
+        /// <param name="pact">Pact details.</param>
+        /// <param name="pluginName">Content plugin name.</param>
+        /// <param name="pluginVersion">Optional plugin version.</param>
+        /// <returns>Asynchronous plugin message builder.</returns>
+        public static IAsynchronousPluginPactBuilderV4 WithAsynchronousPluginInteractions(this IPactV4 pact,
+            string pluginName, string pluginVersion = null)
+        {
+            pact.Config.LogLevel.LogToBuffer();
+            IPactDriver driver = new PactDriver();
+            IPluginPactDriver pluginDriver = driver.NewPluginPact(pact.Consumer, pact.Provider,
+                pluginName, pluginVersion, PactSpecification.V4);
+            return new AsynchronousPluginPactBuilder(pluginDriver, pact.Config);
+        }
     }
 }
