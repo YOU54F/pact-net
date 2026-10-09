@@ -43,8 +43,11 @@ namespace PactNet.Drivers.Plugins
         /// <param name="contentType">Content type</param>
         /// <param name="content">A dictionary containing the plugin content.</param>
         public void WithContent(string contentType, Dictionary<string, object> content)
+            => this.WithContent(InteractionPart.Request, contentType, content);
+
+        internal void WithContent(InteractionPart part, string contentType, Dictionary<string, object> content)
         {
-            uint code = NativeInterop.InteractionContents(this.interaction, InteractionPart.Request, contentType,  JsonSerializer.Serialize(content));
+            uint code = NativeInterop.InteractionContents(this.interaction, part, contentType, JsonSerializer.Serialize(content));
 
             if (code != 0)
             {
