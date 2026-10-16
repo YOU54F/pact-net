@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json;
 using FluentAssertions;
 using PactNet.Matchers;
@@ -11,7 +12,7 @@ namespace PactNet.Abstractions.Tests.Matchers
         public void Ctor_String_SerializesCorrectly()
         {
             // Arrange
-            var example = new[]
+            ICollection<dynamic> example = new List<dynamic>
             {
                 "Thing1",
                 "Thing2",

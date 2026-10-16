@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Linq;
 using FluentAssertions;
 using PactNet.Matchers;
@@ -170,7 +171,7 @@ namespace PactNet.Abstractions.Tests.Matchers
         public void ArrayContainsMatcher_WhenCalled_ReturnsMatcher()
         {
             // Arrange
-            var example = new[]
+            ICollection<dynamic> example = new List<dynamic>
             {
                 "test1",
                 "test2",

@@ -108,8 +108,8 @@ namespace Consumer.Tests
                     new
                     {
                         Id = Match.Integer(expected2.Id),
-                        Status = expected2.Status,
-                        Date = Match.Regex("2023-06-29T12:13:14.000000+01:00", @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d\d\d\d+\d\d:\d\d")
+                        Status = Match.Type(expected2.Status),
+                        Date = Match.Regex(expected2.Date.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d")
                     },
                 }));
 

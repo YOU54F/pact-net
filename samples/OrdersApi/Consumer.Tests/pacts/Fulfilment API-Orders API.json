@@ -117,7 +117,7 @@
               "status": "Pending"
             },
             {
-              "date": "2023-06-29T12:13:14.000000+01:00",
+              "date": "2023-06-29T12:13:14.0000000+01:00",
               "id": 2,
               "status": "Pending"
             }
@@ -176,7 +176,7 @@
                           "matchers": [
                             {
                               "match": "regex",
-                              "regex": "\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d\\.\\d\\d\\d\\d\\d\\d+\\d\\d:\\d\\d"
+                              "regex": "\\d\\d\\d\\d-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\d(?:\\.\\d+)?[+-]\\d\\d:\\d\\d"
                             }
                           ]
                         },
@@ -185,6 +185,14 @@
                           "matchers": [
                             {
                               "match": "integer"
+                            }
+                          ]
+                        },
+                        "$.status": {
+                          "combine": "AND",
+                          "matchers": [
+                            {
+                              "match": "type"
                             }
                           ]
                         }

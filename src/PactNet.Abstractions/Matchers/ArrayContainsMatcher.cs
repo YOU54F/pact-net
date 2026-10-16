@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace PactNet.Matchers
@@ -17,13 +18,15 @@ namespace PactNet.Matchers
         /// The items expected to be in the array.
         /// </summary>
         [JsonPropertyName("variants")]
-        public dynamic Value { get; }
+        public ICollection<dynamic> Value { get; }
+
+        dynamic IMatcher.Value => Value;
 
         /// <summary>
         /// Initialises a new instance of the <see cref="ArrayContainsMatcher"/> class.
         /// </summary>
-        /// <param name="variants"></param>
-        public ArrayContainsMatcher(dynamic[] variants)
+        /// <param name="variants">The variants expected to be in the array.</param>
+        public ArrayContainsMatcher(ICollection<dynamic> variants)
         {
             Value = variants;
         }

@@ -42,7 +42,7 @@ public class ArrayContainsMatcherTests
             var strings = await service.GetStringList();
 
             // Assert
-            strings.Should().Contain("Thing 1").And.Contain("Thing 2");
+            strings.Should().Equal("Thing 1", "Thing 2");
         });
     }
 

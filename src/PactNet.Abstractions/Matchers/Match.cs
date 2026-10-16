@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PactNet.Matchers
 {
     /// <summary>
@@ -174,7 +176,7 @@ namespace PactNet.Matchers
         /// </summary>
         /// <param name="variations">Variations which should be contained in the array.</param>
         /// <returns>Matcher</returns>
-        public static IMatcher ArrayContains(dynamic[] variations)
+        public static IMatcher ArrayContains(ICollection<dynamic> variations)
         {
             return new ArrayContainsMatcher(variations);
         }
