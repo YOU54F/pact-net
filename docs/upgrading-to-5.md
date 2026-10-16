@@ -136,7 +136,7 @@ MacOS now has full x86-64 and ARM support.
 HTTP Request Headers with Multiple Values
 -----------------------------------------
 
-With `libpact_ffi` 0.5.10, a request header configured as separate values can mismatch
+From pact-net 5.1.0, the core library `libpact_ffi` was upgraded, which includes a rewritten mock server. This now means a request header configured as separate values can mismatch
 the single comma-separated value sent by an HTTP client. Configure the expected header
 as the joined value instead:
 
