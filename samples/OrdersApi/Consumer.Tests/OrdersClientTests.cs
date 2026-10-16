@@ -88,7 +88,10 @@ namespace Consumer.Tests
         public async Task GetOrdersAsync_WhenCalled_ReturnsMultipleOrders()
         {
             var expected1 = new OrderDto(1, OrderStatus.Pending, new DateTimeOffset(2023, 6, 28, 12, 13, 14, TimeSpan.FromHours(1)));
-            var expected2 = new OrderDto(2, OrderStatus.Pending, new DateTimeOffset(2023, 6, 29, 12, 13, 14, TimeSpan.FromHours(1)));
+            var expected2 = new OrderDto(2, OrderStatus.Shipped, new DateTimeOffset(2023, 6, 29, 12, 13, 14, TimeSpan.FromHours(1)))
+            {
+                ShippedDate = new DateTimeOffset(2023, 6, 30, 12, 13, 14, TimeSpan.FromHours(1))
+            };
 
             this.pact
                 .UponReceiving("a request for multiple orders by id")
@@ -109,7 +112,8 @@ namespace Consumer.Tests
                     {
                         Id = Match.Integer(expected2.Id),
                         Status = Match.Type(expected2.Status),
-                        Date = Match.Regex(expected2.Date.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d")
+                        Date = Match.Regex(expected2.Date.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d"),
+                        ShippedDate = Match.Regex(expected2.ShippedDate.Value.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d")
                     },
                 }));
 

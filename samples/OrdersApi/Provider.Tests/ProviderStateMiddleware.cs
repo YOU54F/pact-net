@@ -62,9 +62,15 @@ namespace Provider.Tests
         private async Task EnsureEventsExistAsync(IDictionary<string, object> parameters)
         {
             var ids = (JsonElement)parameters["ids"];
-            foreach (var id in ids.GetString()!.Split(',').Select(int.Parse))
+            var orderIds = ids.GetString()!.Split(',').Select(int.Parse).ToArray();
+            for (int index = 0; index < orderIds.Length; index++)
             {
-                await this.orders.InsertAsync(new OrderDto(id, OrderStatus.Fulfilling, DateTimeOffset.Now));
+                DateTimeOffset orderDate = DateTimeOffset.Now;
+                OrderDto order = index == 0
+                    ? new OrderDto(orderIds[index], OrderStatus.Pending, orderDate)
+                    : new OrderDto(orderIds[index], OrderStatus.Shipped, orderDate) { ShippedDate = orderDate };
+
+                await this.orders.InsertAsync(order);
             }
         }
 
