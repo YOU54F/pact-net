@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -36,7 +37,8 @@ namespace Provider.Tests
 
             this.providerStates = new Dictionary<string, Func<IDictionary<string, object>, Task>>
             {
-                ["an order with ID {id} exists"] = this.EnsureEventExistsAsync
+                ["an order with ID {id} exists"] = this.EnsureEventExistsAsync,
+                ["orders with ids {ids} exist"] = this.EnsureEventsExistAsync
             };
         }
 
@@ -50,6 +52,26 @@ namespace Provider.Tests
             JsonElement id = (JsonElement)parameters["id"];
 
             await this.orders.InsertAsync(new OrderDto(id.GetInt32(), OrderStatus.Fulfilling, DateTimeOffset.Now));
+        }
+
+        /// <summary>
+        /// Ensure a series of events exist
+        /// </summary>
+        /// <param name="parameters">Event parameters</param>
+        /// <returns>Awaitable</returns>
+        private async Task EnsureEventsExistAsync(IDictionary<string, object> parameters)
+        {
+            var ids = (JsonElement)parameters["ids"];
+            var orderIds = ids.GetString()!.Split(',').Select(int.Parse).ToArray();
+            for (int index = 0; index < orderIds.Length; index++)
+            {
+                DateTimeOffset orderDate = DateTimeOffset.Now;
+                OrderDto order = index == 0
+                    ? new OrderDto(orderIds[index], OrderStatus.Pending, orderDate)
+                    : new OrderDto(orderIds[index], OrderStatus.Shipped, orderDate) { ShippedDate = orderDate };
+
+                await this.orders.InsertAsync(order);
+            }
         }
 
         /// <summary>
@@ -79,7 +101,7 @@ namespace Provider.Tests
                 try
                 {
                     ProviderState providerState = JsonSerializer.Deserialize<ProviderState>(jsonRequestBody, Options);
-                    
+
                     if (!string.IsNullOrEmpty(providerState?.State))
                     {
                         await this.providerStates[providerState.State].Invoke(providerState.Params);

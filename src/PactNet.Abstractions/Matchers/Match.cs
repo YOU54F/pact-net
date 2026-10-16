@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace PactNet.Matchers
 {
     /// <summary>
@@ -167,6 +169,16 @@ namespace PactNet.Matchers
         public static IMatcher Include(string example)
         {
             return new IncludeMatcher(example);
+        }
+
+        /// <summary>
+        /// Matcher which matches an array containing the specified variations.
+        /// </summary>
+        /// <param name="variations">Variations which should be contained in the array.</param>
+        /// <returns>Matcher</returns>
+        public static IMatcher ArrayContains(ICollection<dynamic> variations)
+        {
+            return new ArrayContainsMatcher(variations);
         }
     }
 }

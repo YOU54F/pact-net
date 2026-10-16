@@ -85,6 +85,62 @@ namespace Consumer.Tests
         }
 
         [Fact]
+        public async Task GetOrdersAsync_WhenCalled_ReturnsMultipleOrders()
+        {
+            var expected1 = new OrderDto(1, OrderStatus.Pending, new DateTimeOffset(2023, 6, 28, 12, 13, 14, TimeSpan.FromHours(1)));
+            var expected2 = new OrderDto(2, OrderStatus.Shipped, new DateTimeOffset(2023, 6, 29, 12, 13, 14, TimeSpan.FromHours(1)))
+            {
+                ShippedDate = new DateTimeOffset(2023, 6, 30, 12, 13, 14, TimeSpan.FromHours(1))
+            };
+
+            this.pact
+                .UponReceiving("a request for multiple orders by id")
+                .Given("orders with ids {ids} exist", new Dictionary<string, string> { ["ids"] = "1,2" })
+                .WithRequest(HttpMethod.Get, "/api/orders/many/1,2")
+                .WithHeader("Accept", "application/json")
+                .WillRespond()
+                .WithStatus(HttpStatusCode.OK)
+                .WithJsonBody(Match.ArrayContains(new dynamic[]
+                {
+                    new
+                    {
+                        Id = Match.Integer(expected1.Id),
+                        Status = Match.Regex(expected1.Status.ToString(), string.Join("|", Enum.GetNames<OrderStatus>())),
+                        Date = Match.Type(expected1.Date.ToString("O"))
+                    },
+                    new
+                    {
+                        Id = Match.Integer(expected2.Id),
+                        Status = Match.Type(expected2.Status),
+                        Date = Match.Regex(expected2.Date.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d"),
+                        ShippedDate = Match.Regex(expected2.ShippedDate.Value.ToString("O"), @"\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?[+-]\d\d:\d\d")
+                    },
+                }));
+
+            await this.pact.VerifyAsync(async ctx =>
+            {
+                this.mockFactory
+                    .Setup(f => f.CreateClient("Orders"))
+                    .Returns(() => new HttpClient
+                    {
+                        BaseAddress = ctx.MockServerUri,
+                        DefaultRequestHeaders =
+                        {
+                            Accept = { MediaTypeWithQualityHeaderValue.Parse("application/json") }
+                        }
+                    });
+
+                var client = new OrdersClient(this.mockFactory.Object);
+
+                OrderDto[] orders = await client.GetOrdersAsync(new[] { 1, 2 });
+
+                orders.Should().HaveCount(2);
+                orders[0].Should().Be(expected1);
+                orders[1].Should().Be(expected2);
+            });
+        }
+
+        [Fact]
         public async Task GetOrderAsync_UnknownOrder_ReturnsNotFound()
         {
             this.pact
