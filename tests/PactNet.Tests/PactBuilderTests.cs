@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using AutoFixture;
 using FluentAssertions;
 using Moq;
@@ -175,6 +176,50 @@ namespace PactNet.Tests
         }
 
         [Fact]
+        public void Verify_Mismatches_ExposesMismatchesAndLogsOnException()
+        {
+            this.mockServer.Setup(s => s.MockServerMismatches()).Returns("[{\"type\":\"request-mismatch\"}]");
+            this.mockServer.Setup(s => s.MockServerLogs()).Returns("some logs");
+
+            Action action = () => this.builder.Verify(Success);
+
+            action.Should().Throw<PactMockServerMismatchException>()
+                  .Which.Should().BeEquivalentTo(new
+                  {
+                      Mismatches = "[{\"type\":\"request-mismatch\"}]",
+                      MockServerLogs = "some logs"
+                  });
+        }
+
+        [Fact]
+        public async Task VerifyAsync_Mismatches_ExposesMismatchesAndLogsOnException()
+        {
+            this.mockServer.Setup(s => s.MockServerMismatches()).Returns("[{\"type\":\"request-mismatch\"}]");
+            this.mockServer.Setup(s => s.MockServerLogs()).Returns("some logs");
+
+            Func<Task> action = () => this.builder.VerifyAsync(SuccessAsync);
+
+            var exception = await action.Should().ThrowAsync<PactMockServerMismatchException>();
+            exception.Which.Mismatches.Should().Be("[{\"type\":\"request-mismatch\"}]");
+            exception.Which.MockServerLogs.Should().Be("some logs");
+        }
+
+        [Fact]
+        public void Verify_Mismatches_ReadsLogsOnceForExceptionAndOutput()
+        {
+            // the FFI log buffer is drained on read, so a second read would return nothing
+            this.mockServer.Setup(s => s.MockServerMismatches()).Returns("[{\"type\":\"request-mismatch\"}]");
+            this.mockServer.SetupSequence(s => s.MockServerLogs()).Returns("some logs").Returns(string.Empty);
+
+            Action action = () => this.builder.Verify(Success);
+
+            action.Should().Throw<PactMockServerMismatchException>()
+                  .Which.MockServerLogs.Should().Be("some logs");
+            this.mockOutput.Verify(o => o.WriteLine("some logs"));
+            this.mockServer.Verify(s => s.MockServerLogs(), Times.Once);
+        }
+
+        [Fact]
         public void Verify_Mismatches_ShutsDownMockServer()
         {
             this.mockServer.Setup(s => s.MockServerMismatches()).Returns("some mismatches");
@@ -194,6 +239,8 @@ namespace PactNet.Tests
         private static void Success(IConsumerContext ctx)
         {
         }
+
+        private static Task SuccessAsync(IConsumerContext ctx) => Task.CompletedTask;
 
         private static void Error(IConsumerContext ctx)
         {
