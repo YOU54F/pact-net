@@ -40,6 +40,30 @@ namespace PactNet
         IResponseBuilderV2 WithHeader(string key, IMatcher matcher);
 
         /// <summary>
+        /// Add a response header with multiple values, e.g. a header which appears on multiple field lines
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="values">Header values, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, value)</c> once per value. Each value is added at the next index for
+        /// that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV2 WithHeader(string key, params string[] values);
+
+        /// <summary>
+        /// Add a response header with multiple values, each with its own matcher
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="matchers">Header value matchers, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, matcher)</c> once per matcher. Each matcher is added at the next index
+        /// for that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV2 WithHeader(string key, params IMatcher[] matchers);
+
+        /// <summary>
         /// Set a response body which is serialised as JSON
         /// </summary>
         /// <param name="body">Response body</param>
@@ -99,6 +123,30 @@ namespace PactNet
         IResponseBuilderV3 WithHeader(string key, IMatcher matcher);
 
         /// <summary>
+        /// Add a response header with multiple values, e.g. a header which appears on multiple field lines
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="values">Header values, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, value)</c> once per value. Each value is added at the next index for
+        /// that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV3 WithHeader(string key, params string[] values);
+
+        /// <summary>
+        /// Add a response header with multiple values, each with its own matcher
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="matchers">Header value matchers, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, matcher)</c> once per matcher. Each matcher is added at the next index
+        /// for that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV3 WithHeader(string key, params IMatcher[] matchers);
+
+        /// <summary>
         /// Set a response body which is serialised as JSON
         /// </summary>
         /// <param name="body">Response body</param>
@@ -156,6 +204,30 @@ namespace PactNet
         /// <param name="matcher">Header value matcher</param>
         /// <returns>Fluent builder</returns>
         IResponseBuilderV4 WithHeader(string key, IMatcher matcher);
+
+        /// <summary>
+        /// Add a response header with multiple values, e.g. a header which appears on multiple field lines
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="values">Header values, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, value)</c> once per value. Each value is added at the next index for
+        /// that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV4 WithHeader(string key, params string[] values);
+
+        /// <summary>
+        /// Add a response header with multiple values, each with its own matcher
+        /// </summary>
+        /// <param name="key">Header key</param>
+        /// <param name="matchers">Header value matchers, in order</param>
+        /// <returns>Fluent builder</returns>
+        /// <remarks>
+        /// Equivalent to calling <c>WithHeader(key, matcher)</c> once per matcher. Each matcher is added at the next index
+        /// for that header, so values added by previous calls for the same key are kept and these are appended after them.
+        /// </remarks>
+        IResponseBuilderV4 WithHeader(string key, params IMatcher[] matchers);
 
         /// <summary>
         /// Set a response body which is serialised as JSON
