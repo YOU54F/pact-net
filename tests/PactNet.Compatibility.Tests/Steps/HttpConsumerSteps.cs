@@ -21,10 +21,14 @@ namespace PactNet.Compatibility.Tests.Steps
             { "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth" };
 
         private readonly CompatWorld world;
+        private readonly PluginWorld plugin;
+        private readonly PluginSteps pluginSteps;
 
-        public HttpConsumerSteps(CompatWorld world)
+        public HttpConsumerSteps(CompatWorld world, PluginWorld plugin, PluginSteps pluginSteps)
         {
             this.world = world;
+            this.plugin = plugin;
+            this.pluginSteps = pluginSteps;
         }
 
         [Given(@"^the following HTTP interactions have been defined:$")]
@@ -57,7 +61,18 @@ namespace PactNet.Compatibility.Tests.Steps
         });
 
         [Then(@"^a (\d+) (?:success|error) response is returned$")]
-        public void ResponseReturned(int status) => this.world.Run("response status", () =>
+        public void ResponseReturned(int status)
+        {
+            if (this.plugin.Active)
+            {
+                this.pluginSteps.ResponseStatus(status);
+                return;
+            }
+
+            this.ResponseReturnedV1(status);
+        }
+
+        private void ResponseReturnedV1(int status) => this.world.Run("response status", () =>
         {
             HttpResponse response = this.RequireResponse();
             CompatWorld.Check(response.Status == status,
@@ -80,10 +95,32 @@ namespace PactNet.Compatibility.Tests.Steps
         });
 
         [When(@"^the pact test is done$")]
-        public Task PactTestDone() => this.world.RunAsync("pact test done", () => this.world.RequireSession().FinishAsync());
+        public Task PactTestDone()
+        {
+            if (this.plugin.Active)
+            {
+                this.pluginSteps.PactTestDone();
+                return Task.CompletedTask;
+            }
+
+            return this.PactTestDoneV1();
+        }
+
+        private Task PactTestDoneV1() => this.world.RunAsync("pact test done", () => this.world.RequireSession().FinishAsync());
 
         [Then(@"^the mock server status will be OK$")]
-        public void StatusOk() => this.world.Run("status OK", () =>
+        public void StatusOk()
+        {
+            if (this.plugin.Active)
+            {
+                this.pluginSteps.StatusOk();
+                return;
+            }
+
+            this.StatusOkV1();
+        }
+
+        private void StatusOkV1() => this.world.Run("status OK", () =>
         {
             MockServerSession session = this.RequireDone();
             CompatWorld.Check(session.Ok, $"Expected the mock server status to be OK, but verification failed: {session.VerifyError?.Message}\n{session.FinalMismatches?.ToJsonString()}");
@@ -96,7 +133,18 @@ namespace PactNet.Compatibility.Tests.Steps
         });
 
         [Then(@"^the mock server will write out a Pact file for the interactions? when done$")]
-        public void PactWritten() => this.world.Run("pact file written", () =>
+        public void PactWritten()
+        {
+            if (this.plugin.Active)
+            {
+                this.pluginSteps.PactWritten();
+                return;
+            }
+
+            this.PactWrittenV1();
+        }
+
+        private void PactWrittenV1() => this.world.Run("pact file written", () =>
         {
             MockServerSession session = this.RequireDone();
             CompatWorld.Check(File.Exists(session.PactFile), $"Expected a pact file at {session.PactFile}");
@@ -214,7 +262,18 @@ namespace PactNet.Compatibility.Tests.Steps
         });
 
         [Then(@"^the mock server status will be mismatches$")]
-        public void StatusMismatches() => this.world.Run("request mismatches", () =>
+        public void StatusMismatches()
+        {
+            if (this.plugin.Active)
+            {
+                this.pluginSteps.StatusMismatches();
+                return;
+            }
+
+            this.StatusMismatchesV1();
+        }
+
+        private void StatusMismatchesV1() => this.world.Run("request mismatches", () =>
         {
             MockServerSession session = this.RequireDone();
             CompatWorld.Check(!session.Ok && session.FinalMismatches.Any(m => (string)m?["type"] == "request-mismatch"),
