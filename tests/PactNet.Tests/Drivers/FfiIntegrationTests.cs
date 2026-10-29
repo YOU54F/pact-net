@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
 using PactNet.Drivers;
+using PactNet.Drivers.Http;
+using PactNet.Drivers.Message;
 using PactNet.Interop;
 using Xunit;
 using Xunit.Abstractions;
@@ -22,8 +24,7 @@ namespace PactNet.Tests.Drivers
         public FfiIntegrationTests(ITestOutputHelper output)
         {
             this.output = output;
-
-            NativeInterop.LogToBuffer(LevelFilter.Trace);
+            PactLogLevel.Trace.LogToBuffer();
         }
 
         [Fact]
@@ -36,14 +37,12 @@ namespace PactNet.Tests.Drivers
                 IHttpPactDriver pact = driver.NewHttpPact("NativeDriverTests-Consumer-V3",
                                                           "NativeDriverTests-Provider",
                                                           PactSpecification.V3);
-            
                 IHttpInteractionDriver interaction = pact.NewHttpInteraction("a sample interaction");
 
                 interaction.Given("provider state");
                 interaction.GivenWithParam("state with param", "foo", "bar");
                 interaction.WithRequest("POST", "/path");
-                interaction.WithRequestHeader("X-Request-Header", "request1", 0);
-                interaction.WithRequestHeader("X-Request-Header", "request2", 1);
+                interaction.WithRequestHeader("X-Request-Header", "request1, request2", 0);
                 interaction.WithQueryParameter("param", "value", 0);
                 interaction.WithRequestBody("application/json", @"{""foo"":42}");
 
@@ -52,7 +51,7 @@ namespace PactNet.Tests.Drivers
                 interaction.WithResponseHeader("X-Response-Header", "value2", 1);
                 interaction.WithResponseBody("application/json", @"{""foo"":42}");
 
-                using IMockServerDriver mockServer = pact.CreateMockServer("127.0.0.1", null, false);
+                using IMockServerDriver mockServer = pact.CreateMockServer("127.0.0.1", null, false, "http");
 
                 var client = new HttpClient { BaseAddress = mockServer.Uri };
                 client.DefaultRequestHeaders.Add("X-Request-Header", new[] { "request1", "request2" });
@@ -128,6 +127,45 @@ namespace PactNet.Tests.Drivers
 
             string pactContents = File.ReadAllText(file.FullName).TrimEnd();
             string expectedPactContent = File.ReadAllText("data/v3-message-integration.json").TrimEnd();
+            pactContents.Should().Be(expectedPactContent);
+        }
+
+        [Fact]
+        public void SyncMessageInteraction_v4_CreatesPactFile()
+        {
+            var driver = new PactDriver();
+
+            try
+            {
+                IMessagePactDriver pact = driver.NewMessagePact("NativeDriverTests-Consumer-V4",
+                                                                "NativeDriverTests-Producer",
+                                                                PactSpecification.V4);
+
+                ISyncMessageInteractionDriver interaction = pact.NewSyncMessageInteraction("a sync message interaction");
+
+                interaction.WithRequestMetadata("foo", @"""bar""");
+                interaction.WithRequestMetadata("count", "42");
+                interaction.WithRequestContents("application/json", @"{""foo"":42}");
+
+                // response metadata only applies to responses that already exist, so set the contents first
+                interaction.WithResponseContents("application/json", @"{""baz"":42}");
+                interaction.WithResponseMetadata("baz", @"{""pact:matcher:type"":""regex"",""value"":""bash"",""regex"":""^ba""}");
+
+                string generated = interaction.GenerateContents();
+                generated.Should().NotBeNullOrEmpty();
+
+                interaction.WritePactFile(Environment.CurrentDirectory);
+            }
+            finally
+            {
+                this.WriteDriverLogs(driver);
+            }
+
+            var file = new FileInfo("NativeDriverTests-Consumer-V4-NativeDriverTests-Producer.json");
+            file.Exists.Should().BeTrue();
+
+            string pactContents = File.ReadAllText(file.FullName).TrimEnd();
+            string expectedPactContent = File.ReadAllText("data/v4-sync-message-integration.json").TrimEnd();
             pactContents.Should().Be(expectedPactContent);
         }
     }

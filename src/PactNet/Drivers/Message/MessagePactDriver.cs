@@ -1,21 +1,18 @@
 ﻿using PactNet.Interop;
 
-namespace PactNet.Drivers
+namespace PactNet.Drivers.Message
 {
     /// <summary>
     /// Driver for message pacts
     /// </summary>
     internal class MessagePactDriver : AbstractPactDriver, IMessagePactDriver
     {
-        private readonly PactHandle pact;
-
         /// <summary>
         /// Initialises a new instance of the <see cref="MessagePactDriver"/> class.
         /// </summary>
         /// <param name="pact">Pact handle</param>
         internal MessagePactDriver(PactHandle pact) : base(pact)
         {
-            this.pact = pact;
         }
 
         /// <summary>
@@ -27,6 +24,17 @@ namespace PactNet.Drivers
         {
             InteractionHandle interaction = NativeInterop.NewMessageInteraction(this.pact, description);
             return new MessageInteractionDriver(this.pact, interaction);
+        }
+
+        /// <summary>
+        /// Create a new synchronous (request/response) message interaction on the current pact
+        /// </summary>
+        /// <param name="description">Interaction description</param>
+        /// <returns>Synchronous message interaction driver</returns>
+        public ISyncMessageInteractionDriver NewSyncMessageInteraction(string description)
+        {
+            InteractionHandle interaction = NativeInterop.NewSyncMessageInteraction(this.pact, description);
+            return new SyncMessageInteractionDriver(this.pact, interaction);
         }
 
         /// <summary>

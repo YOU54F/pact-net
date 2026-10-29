@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using FluentAssertions;
+using PactNet.Exceptions;
 using PactNet.Matchers;
 using PactNet.Output.Xunit;
 using Xunit;
@@ -82,8 +83,7 @@ namespace PactNet.Tests
             builder.UponReceiving("a sample request")
                        .Given("a provider state")
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                       .WithHeader("X-Request", "request1, request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -119,8 +119,7 @@ namespace PactNet.Tests
                            ["baz"] = "bash"
                        })
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                       .WithHeader("X-Request", "request1, request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -156,8 +155,7 @@ namespace PactNet.Tests
                             ["baz"] = "bash"
                         })
                        .WithRequest(HttpMethod.Post, "/things")
-                       .WithHeader("X-Request", "request1")
-                       .WithHeader("X-Request", "request2")
+                       .WithHeader("X-Request", "request1, request2")
                        .WithQuery("param", "value1")
                        .WithQuery("param", "value2")
                        .WithJsonBody(this.matcher)
@@ -231,6 +229,84 @@ namespace PactNet.Tests
         }
 
         [Fact]
+        public void WithSynchronousMessageInteractions_V4_CreatesExpectedPactFile()
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-V4", "PactExtensionsTests-SyncMessageProvider", config);
+            ISyncMessagePactBuilderV4 builder = messagePact.WithSynchronousMessageInteractions();
+
+            SyncData received = null;
+
+            builder
+               .WithPactMetadata("framework", "language", "C#")
+               .ExpectsToReceive("a sample request")
+               .Given("a provider state")
+               .Given("a provider state with params", new Dictionary<string, string>
+                {
+                    ["foo"] = "bar"
+                })
+               .WithReference("AsyncAPI", "operationId", "getOrder")
+               .WithReference("AsyncAPI", "version", "123")
+               .WithRequestMetadata("queueId", "1234")
+               .WithRequestMetadata("priority", 1)
+               .WithRequestJsonContent(new { Int = Match.Integer(1), String = Match.Type("a description") })
+               .WithResponseMetadata("replyTo", Match.Regex("queue-1", "^queue-"))
+               .WithResponseJsonContent(new { Int = Match.Integer(2), String = Match.Type("a reply") })
+               .Verify<SyncData, SyncData>(request =>
+                {
+                    received = request;
+
+                    // matched against the response matchers, not the example values
+                    return new SyncData { Int = 7, String = "another reply" };
+                });
+
+            received.Should().BeEquivalentTo(new SyncData { Int = 1, String = "a description" });
+
+            string actualPact = File.ReadAllText("PactExtensionsTests-SyncMessageConsumer-V4-PactExtensionsTests-SyncMessageProvider.json").TrimEnd();
+            string expectedPact = File.ReadAllText("data/v4-sync-message-consumer-integration.json").TrimEnd();
+
+            actualPact.Should().Be(expectedPact);
+        }
+
+        [Theory]
+        [InlineData("2026-01-01 10:00:00", true)]
+        [InlineData("01/01/2026", false)]
+        public void WithSynchronousMessageInteractions_RegexMatcher_ChecksResponseFormat(string actual, bool matches)
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-Regex", "PactExtensionsTests-SyncMessageProvider", config);
+
+            Action action = () => messagePact
+                .WithSynchronousMessageInteractions()
+                .ExpectsToReceive("a sample request")
+                .WithRequestJsonContent(new { Int = 1 })
+                .WithResponseJsonContent(new { Int = Match.Integer(2), String = Match.Regex("2024-10-12 03:31:11", @"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$") })
+                .Verify<SyncData, SyncData>(_ => new SyncData { Int = 3, String = actual });
+
+            if (matches)
+            {
+                action.Should().NotThrow();
+            }
+            else
+            {
+                action.Should().Throw<PactMessageConsumerVerificationException>().WithMessage("*$.string*");
+            }
+        }
+
+        [Fact]
+        public void WithSynchronousMessageInteractions_ResponseDoesNotMatch_Throws()
+        {
+            IPactV4 messagePact = Pact.V4("PactExtensionsTests-SyncMessageConsumer-Mismatch", "PactExtensionsTests-SyncMessageProvider", config);
+
+            Action action = () => messagePact
+                .WithSynchronousMessageInteractions()
+                .ExpectsToReceive("a sample request")
+                .WithRequestJsonContent(new { Int = 1 })
+                .WithResponseJsonContent(new { Int = 2, String = "a reply" })
+                .Verify<SyncData, SyncData>(_ => new SyncData { Int = 3, String = "something else" });
+
+            action.Should().Throw<Exception>();
+        }
+
+        [Fact]
         public async Task CombinedHttpAndMessageInteractions_v4_CreatesExpectedPactFile()
         {
             IPactV4 pact = Pact.V4("PactExtensionsTests-Combined-V4", "PactExtensionsTests-Provider", config);
@@ -247,8 +323,7 @@ namespace PactNet.Tests
                         ["baz"] = "bash"
                     })
                     .WithRequest(HttpMethod.Post, "/things")
-                    .WithHeader("X-Request", "request1")
-                    .WithHeader("X-Request", "request2")
+                    .WithHeader("X-Request", "request1, request2")
                     .WithQuery("param", "value1")
                     .WithQuery("param", "value2")
                     .WithJsonBody(this.matcher)
@@ -305,6 +380,12 @@ namespace PactNet.Tests
             string responseContent = await response.Content.ReadAsStringAsync();
             TestData responseData = JsonSerializer.Deserialize<TestData>(responseContent, jsonSettings);
             responseData.Should().BeEquivalentTo(body);
+        }
+
+        public class SyncData
+        {
+            public int Int { get; set; }
+            public string String { get; set; }
         }
 
         public class TestData

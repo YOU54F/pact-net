@@ -1,4 +1,4 @@
-﻿namespace PactNet.Drivers
+﻿namespace PactNet.Drivers.Message
 {
     /// <summary>
     /// Driver for message pacts
@@ -11,6 +11,13 @@
         /// <param name="description">Interaction description</param>
         /// <returns>Message interaction driver</returns>
         IMessageInteractionDriver NewMessageInteraction(string description);
+
+        /// <summary>
+        /// Create a new synchronous (request/response) message interaction on the current pact
+        /// </summary>
+        /// <param name="description">Interaction description</param>
+        /// <returns>Synchronous message interaction driver</returns>
+        ISyncMessageInteractionDriver NewSyncMessageInteraction(string description);
 
         /// <summary>
         /// Add metadata to the message pact

@@ -21,14 +21,14 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_mock_server_mismatches")]
         public static extern IntPtr MockServerMismatches(int mockServerPort);
 
-        [DllImport(DllName, EntryPoint = "pactffi_mock_server_logs")]
-        public static extern IntPtr MockServerLogs(int mockServerPort);
-
         [DllImport(DllName, EntryPoint = "pactffi_cleanup_mock_server")]
         public static extern bool CleanupMockServer(int mockServerPort);
 
         [DllImport(DllName, EntryPoint = "pactffi_pact_handle_write_file")]
         public static extern int WritePactFile(PactHandle pact, string directory, bool overwrite);
+
+        [DllImport(DllName, EntryPoint = "pactffi_write_pact_file")]
+        public static extern int WritePactFileForPort(int port, string directory, bool overwrite);
 
         [DllImport(DllName, EntryPoint = "pactffi_fetch_log_buffer")]
         public static extern string FetchLogBuffer(string logId);
@@ -41,6 +41,9 @@ namespace PactNet.Interop
 
         [DllImport(DllName, EntryPoint = "pactffi_new_interaction")]
         public static extern InteractionHandle NewInteraction(PactHandle pact, string description);
+
+        [DllImport(DllName, EntryPoint = "pactffi_new_sync_message_interaction")]
+        public static extern InteractionHandle NewSyncMessageInteraction(PactHandle pact, string description);
 
         [DllImport(DllName, EntryPoint = "pactffi_given")]
         public static extern bool Given(InteractionHandle interaction, string description);
@@ -69,6 +72,9 @@ namespace PactNet.Interop
         [DllImport(DllName, EntryPoint = "pactffi_verify")]
         public static extern int Verify(string args);
 
+        [DllImport(DllName, EntryPoint = "pactffi_add_interaction_reference")]
+        public static extern bool AddInteractionReference(InteractionHandle interaction, string group, string name, string value);
+
         #endregion Http Interop Support
 
         #region Messaging Interop Support
@@ -90,6 +96,15 @@ namespace PactNet.Interop
 
         [DllImport(DllName, EntryPoint = "pactffi_message_reify")]
         public static extern IntPtr MessageReify(InteractionHandle message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_with_metadata")]
+        public static extern bool WithMetadata(InteractionHandle interaction, string key, string value, InteractionPart part);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_generate_contents")]
+        public static extern IntPtr SyncMessageGenerateContents(InteractionHandle message);
+
+        [DllImport(DllName, EntryPoint = "pactffi_sync_message_match_response_contents")]
+        public static extern IntPtr SyncMessageMatchResponseContents(InteractionHandle message, UIntPtr index, string contentType, string contents);
 
         #endregion Http Interop Support
 
@@ -166,6 +181,19 @@ namespace PactNet.Interop
 
         [DllImport(DllName, EntryPoint = "pactffi_verifier_output")]
         public static extern IntPtr VerifierOutput(IntPtr handle, byte stripAnsi);
+
+        #endregion
+
+        #region Plugins
+
+        [DllImport(DllName, EntryPoint = "pactffi_using_plugin")]
+        public static extern uint UsingPlugin(PactHandle pact, string name, string version);
+
+        [DllImport(DllName, EntryPoint = "pactffi_interaction_contents")]
+        public static extern uint InteractionContents(InteractionHandle interaction, InteractionPart part, string contentType, string body);
+
+        [DllImport(DllName, EntryPoint = "pactffi_cleanup_plugins")]
+        public static extern void CleanupPlugins(PactHandle pact);
 
         #endregion
     }

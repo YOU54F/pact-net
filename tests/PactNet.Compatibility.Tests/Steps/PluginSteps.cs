@@ -121,47 +121,115 @@ namespace PactNet.Compatibility.Tests.Steps
         [StepDefinition(@"^an HTTP interaction is being defined for a consumer test$")]
         [StepDefinition(@"^another HTTP interaction is being defined for the same consumer test$")]
         public void HttpInteraction() => this.Run("HTTP interaction", () =>
-        {
-            this.plugin.Ffi("new_interaction");
-            PactHandle pact = this.plugin.EnsurePact();
-            this.plugin.InteractionHandles.Add(NativeInterop.NewInteraction(pact, $"plugin interaction {this.plugin.InteractionHandles.Count + 1}"));
-        });
+            this.plugin.HttpDefs.Add(new PluginWorld.HttpDef { Description = $"plugin interaction {this.plugin.HttpDefs.Count + 1}" }));
 
         [StepDefinition(@"^a message interaction is being defined for a consumer test$")]
         public void MessageInteraction() => this.Run("message interaction", () =>
         {
-            this.plugin.Ffi("new_message_interaction");
-            this.plugin.InteractionHandles.Add(NativeInterop.NewMessageInteraction(this.plugin.EnsurePact(), "plugin message 1"));
+            this.plugin.Dsl("WithAsynchronousPluginInteractions");
+            this.plugin.AsyncDefined = true;
         });
 
         [StepDefinition(@"^a synchronous message interaction is being defined for a consumer test$")]
         public void SyncMessageInteraction() => this.Run("synchronous message interaction", () =>
         {
-            this.plugin.Ffi("new_sync_message_interaction");
-            this.plugin.InteractionHandles.Add(PluginFfi.NewSyncMessageInteraction(this.plugin.EnsurePact(), "plugin message 1"));
+            this.plugin.Dsl("WithSynchronousPluginInteractions");
+            this.plugin.SyncDefined = true;
         });
 
         [StepDefinition(@"^the HTTP request is ""([^""]*)"" ""([^""]*)""$")]
         public void HttpRequest(string method, string path) => this.Run("HTTP request", () =>
         {
-            this.plugin.Ffi("with_request");
-            NativeInterop.WithRequest(this.plugin.Current, method, path);
+            this.plugin.CurrentHttp.Method = method;
+            this.plugin.CurrentHttp.Path = path;
         });
 
         [StepDefinition(@"^the HTTP (request|response) body is set with the ""([^""]*)"" plugin for ""([^""]*)"" with:$")]
         public void HttpPluginBody(string part, string name, string contentType, string contents) => this.Run("HTTP plugin body", () =>
-            this.SetPluginContents(name, part == "request" ? InteractionPart.Request : InteractionPart.Response, contentType, contents));
+        {
+            if (part == "request")
+            {
+                this.plugin.CurrentHttp.Request = (name, contentType, contents);
+            }
+            else
+            {
+                this.plugin.CurrentHttp.Response = (name, contentType, contents);
+            }
+        });
 
         [StepDefinition(@"^the (?:synchronous )?message contents are set with the ""([^""]*)"" plugin for ""([^""]*)"" with:$")]
         public void MessagePluginContents(string name, string contentType, string contents) => this.Run("message plugin contents", () =>
-            this.SetPluginContents(name, InteractionPart.Request, contentType, contents));
+        {
+            if (this.plugin.SyncDefined)
+            {
+                this.plugin.Dsl("WithContent");
+                this.plugin.SyncContents = (name, contentType, contents);
+                return;
+            }
+
+            if (this.plugin.AsyncDefined)
+            {
+                this.plugin.Dsl("WithContent");
+                this.plugin.AsyncContents = (name, contentType, contents);
+                return;
+            }
+
+            this.SetPluginContents(name, InteractionPart.Request, contentType, contents);
+        });
+
+        private const string SyncDescription = "plugin message 1";
+
+        private PluginDsl DefineSync(string pactDir, string transport)
+        {
+            var (name, contentType, contents) = this.plugin.SyncContents ?? throw new InvalidOperationException("No synchronous message contents were set");
+            return PluginDsl.Define(pactDir, name, this.plugin.PluginVersion(name), transport, SyncDescription, contentType, contents);
+        }
 
         [StepDefinition(@"^the HTTP response body is ""([^""]*)"" with content type ""([^""]*)""$")]
         public void HttpResponseBody(string body, string contentType) => this.Run("HTTP response body", () =>
+            this.plugin.CurrentHttp.PlainResponse = (body, contentType));
+
+        /// <summary>
+        /// The DSL (<c>WithHttpPluginInteractions</c>) takes one plugin per builder, needs a request line, and has no
+        /// plain (non-plugin) body; it also only writes a pact through a passing mock server test
+        /// </summary>
+        private bool HttpDslCapable(bool mockServer) =>
+            mockServer && this.plugin.Pact == null && this.plugin.HttpDefs.Count > 0 &&
+            this.plugin.HttpDefs.All(d => d.Method != null && d.PlainResponse == null && d.Plugins.Any()) &&
+            this.plugin.HttpDefs.SelectMany(d => d.Plugins).Distinct().Count() == 1;
+
+        /// <summary>Build the recorded HTTP interactions through the FFI pact handle</summary>
+        private void BuildHttpWithFfi()
         {
-            this.plugin.Ffi("with_body");
-            NativeInterop.WithBody(this.plugin.Current, InteractionPart.Response, contentType, Encoding.UTF8.GetString(PluginWorld.BodyCell(body)));
-        });
+            foreach (PluginWorld.HttpDef def in this.plugin.HttpDefs)
+            {
+                this.plugin.Ffi("new_interaction");
+                this.plugin.InteractionHandles.Add(NativeInterop.NewInteraction(this.plugin.EnsurePact(), def.Description));
+                if (def.Method != null)
+                {
+                    this.plugin.Ffi("with_request");
+                    NativeInterop.WithRequest(this.plugin.Current, def.Method, def.Path);
+                }
+
+                if (def.Request is var (reqPlugin, reqType, reqContents))
+                {
+                    this.SetPluginContents(reqPlugin, InteractionPart.Request, reqType, reqContents);
+                }
+
+                if (def.Response is var (resPlugin, resType, resContents))
+                {
+                    this.SetPluginContents(resPlugin, InteractionPart.Response, resType, resContents);
+                }
+
+                if (def.PlainResponse is var (body, contentType))
+                {
+                    this.plugin.Ffi("with_body");
+                    NativeInterop.WithBody(this.plugin.Current, InteractionPart.Response, contentType, Encoding.UTF8.GetString(PluginWorld.BodyCell(body)));
+                }
+            }
+
+            this.plugin.HttpDefs.Clear();
+        }
 
         private void SetPluginContents(string name, InteractionPart part, string contentType, string contents)
         {
@@ -176,6 +244,26 @@ namespace PactNet.Compatibility.Tests.Steps
         [StepDefinition(@"^the Pact file for the test is generated$")]
         public void PactGenerated() => this.Run("pact file generated", () =>
         {
+            if (this.plugin.SyncContents is var (name, contentType, contents))
+            {
+                // The DSL only writes a pact through a mock server, and writing a synchronous message pact from the
+                // HTTP mock server panics in pact_ffi, so a pact with no transport mock server goes through the FFI
+                this.plugin.Ffi("new_sync_message_interaction");
+                this.plugin.InteractionHandles.Add(PluginFfi.NewSyncMessageInteraction(this.plugin.EnsurePact(), SyncDescription));
+                this.SetPluginContents(name, InteractionPart.Request, contentType, contents);
+            }
+
+            if (this.plugin.AsyncContents is var (asyncName, asyncType, asyncContents))
+            {
+                this.plugin.Dsl("Verify");
+                PluginDsl.WriteAsyncMessage(this.plugin.PactDir, asyncName, this.plugin.PluginVersion(asyncName), "plugin message 1", asyncType, asyncContents);
+                this.plugin.ReadPactFile();
+                return;
+            }
+
+            // the DSL only writes a pact through a passing mock server test
+            this.BuildHttpWithFfi();
+
             this.plugin.Ffi("pact_handle_write_file");
             int rc = NativeInterop.WritePactFile(this.plugin.RequirePact(), this.plugin.PactDir, false);
             CompatWorld.Check(rc == 0, $"Writing the pact file failed ({rc})");
@@ -190,6 +278,25 @@ namespace PactNet.Compatibility.Tests.Steps
 
         private void StartMockServer(string transport)
         {
+            if (this.plugin.SyncContents != null)
+            {
+                this.plugin.Dsl("VerifyAsync(" + transport + ")");
+                this.plugin.MockDsl = this.DefineSync(this.plugin.PactDir, transport);
+                this.plugin.MockServerPort = this.plugin.MockDsl.StartAsync().GetAwaiter().GetResult();
+                return;
+            }
+
+            if (transport == "http" && this.HttpDslCapable(mockServer: true))
+            {
+                string name = this.plugin.HttpDefs.SelectMany(d => d.Plugins).First();
+                this.plugin.Dsl("WithHttpPluginInteractions");
+                this.plugin.MockDsl = PluginDsl.DefineHttp(this.plugin.PactDir, name, this.plugin.PluginVersion(name), this.plugin.HttpDefs);
+                this.plugin.MockServerPort = this.plugin.MockDsl.StartAsync().GetAwaiter().GetResult();
+                return;
+            }
+
+            this.BuildHttpWithFfi();
+
             this.plugin.Ffi("create_mock_server_for_transport");
             int port = NativeInterop.CreateMockServerForTransport(this.plugin.RequirePact(), "127.0.0.1", 0, transport, null);
             CompatWorld.Check(port > 0, $"Starting the {transport} mock server failed ({port}): {PluginFfi.LastError()}");
@@ -256,6 +363,20 @@ namespace PactNet.Compatibility.Tests.Steps
         /// <summary>Delegated from <see cref="HttpConsumerSteps"/> ("the pact test is done")</summary>
         internal void PactTestDone() => this.Run("pact test done", () =>
         {
+            if (this.plugin.MockDsl != null)
+            {
+                var (matched, mismatches) = this.plugin.MockDsl.FinishAsync().GetAwaiter().GetResult();
+                this.plugin.Matched = matched;
+                this.plugin.Mismatches = mismatches;
+                if (matched)
+                {
+                    this.plugin.ReadPactFile();
+                }
+
+                this.plugin.MockServerPort = null;
+                return;
+            }
+
             int port = this.RequireMockServer();
             this.plugin.Ffi("mock_server_matched");
             this.plugin.Matched = PluginFfi.MockServerMatched(port);
@@ -423,6 +544,16 @@ namespace PactNet.Compatibility.Tests.Steps
 
         private void WriteMessagePactFile(string description, bool sync, TableRow row, string transport)
         {
+            if (!sync)
+            {
+                string dir = Path.Combine(this.plugin.PactDir, "provider-" + this.plugin.PactFiles.Count);
+                string name = row["plugin"];
+                this.plugin.Dsl("WithAsynchronousPluginInteractions");
+                PluginDsl.WriteAsyncMessage(dir, name, this.plugin.PluginVersion(name), description, row["content type"], row["contents"]);
+                this.plugin.PactFiles.Add(Path.Combine(dir, $"{PluginWorld.Consumer}-{PluginWorld.Provider}.json"));
+                return;
+            }
+
             string file = this.WritePactFile(row["plugin"], pact =>
             {
                 InteractionHandle i;
@@ -514,6 +645,22 @@ namespace PactNet.Compatibility.Tests.Steps
         public Task VerificationRun(string transport) => this.RunAsync("verification", async () =>
         {
             int port = this.plugin.ProviderPort ?? throw new InvalidOperationException("No provider has been started");
+            if (string.IsNullOrEmpty(transport) && this.plugin.PactFiles.Count == 1)
+            {
+                // PactVerifier only has HTTP and message endpoints, so plugin transports (grpc, matt) stay on the FFI
+                this.plugin.Dsl("PactVerifier");
+                (this.plugin.VerifyExitCode, this.plugin.VerifyOutput) =
+                    await Task.Run(() => PluginDsl.VerifyProvider(port, this.plugin.PactFiles[0]));
+                this.plugin.VerifyJson = null;
+                if (this.plugin.VerifyExitCode == 0)
+                {
+                    return;
+                }
+
+                // PactVerifier reports only pass/fail (no JSON results, and the outputters receive nothing on a
+                // mismatch), so a failed verification is re-run through the FFI verifier for the mismatch details
+            }
+
             this.plugin.Ffi("verifier");
             IntPtr handle = NativeInterop.VerifierNewForApplication("pact-net-compat", "0.0.0");
             try
