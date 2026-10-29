@@ -559,7 +559,9 @@ namespace PactNet.Compatibility.Tests.Steps
                 "Metadata had differences" => new[] { "MetadataMismatch" },
                 _ => new[] { error }
             };
-            IEnumerable<string> found = (this.plugin.VerifyJson?["interactionResults"]?.AsArray() ?? new JsonArray())
+            // The verifier JSON lists failures under "errors"; older versions used "interactionResults".
+            IEnumerable<string> found = new[] { "errors", "interactionResults" }
+                .SelectMany(key => this.plugin.VerifyJson?[key]?.AsArray() ?? new JsonArray())
                 .SelectMany(r => r?["mismatch"]?["mismatches"]?.AsArray() ?? new JsonArray())
                 .Select(m => (string)m?["type"]);
             CompatWorld.Check(found.Any(t => types.Contains(t)) || this.plugin.VerifyOutput.Contains(error),
