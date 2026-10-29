@@ -137,8 +137,8 @@ namespace PactNet.Compatibility.Tests.Steps
         [StepDefinition(@"^a synchronous message interaction is being defined for a consumer test$")]
         public void SyncMessageInteraction() => this.Run("synchronous message interaction", () =>
         {
-            this.plugin.Ffi("new_sync_message_interaction");
-            this.plugin.InteractionHandles.Add(PluginFfi.NewSyncMessageInteraction(this.plugin.EnsurePact(), "plugin message 1"));
+            this.plugin.Dsl("WithSynchronousPluginInteractions");
+            this.plugin.SyncDefined = true;
         });
 
         [StepDefinition(@"^the HTTP request is ""([^""]*)"" ""([^""]*)""$")]
@@ -154,7 +154,24 @@ namespace PactNet.Compatibility.Tests.Steps
 
         [StepDefinition(@"^the (?:synchronous )?message contents are set with the ""([^""]*)"" plugin for ""([^""]*)"" with:$")]
         public void MessagePluginContents(string name, string contentType, string contents) => this.Run("message plugin contents", () =>
-            this.SetPluginContents(name, InteractionPart.Request, contentType, contents));
+        {
+            if (this.plugin.SyncDefined)
+            {
+                this.plugin.Dsl("WithContent");
+                this.plugin.SyncContents = (name, contentType, contents);
+                return;
+            }
+
+            this.SetPluginContents(name, InteractionPart.Request, contentType, contents);
+        });
+
+        private const string SyncDescription = "plugin message 1";
+
+        private PluginDsl DefineSync(string pactDir, string transport)
+        {
+            var (name, contentType, contents) = this.plugin.SyncContents ?? throw new InvalidOperationException("No synchronous message contents were set");
+            return PluginDsl.Define(pactDir, name, this.plugin.PluginVersion(name), transport, SyncDescription, contentType, contents);
+        }
 
         [StepDefinition(@"^the HTTP response body is ""([^""]*)"" with content type ""([^""]*)""$")]
         public void HttpResponseBody(string body, string contentType) => this.Run("HTTP response body", () =>
@@ -176,6 +193,16 @@ namespace PactNet.Compatibility.Tests.Steps
         [StepDefinition(@"^the Pact file for the test is generated$")]
         public void PactGenerated() => this.Run("pact file generated", () =>
         {
+            if (this.plugin.SyncContents is var (name, contentType, contents))
+            {
+                // The DSL only writes a pact through a mock server, and writing a synchronous message pact from the
+                // HTTP mock server panics in pact_ffi, so a pact with no transport mock server goes through the FFI
+                this.plugin.Ffi("new_sync_message_interaction");
+                this.plugin.InteractionHandles.Add(PluginFfi.NewSyncMessageInteraction(this.plugin.EnsurePact(), SyncDescription));
+                this.SetPluginContents(name, InteractionPart.Request, contentType, contents);
+            }
+
+
             this.plugin.Ffi("pact_handle_write_file");
             int rc = NativeInterop.WritePactFile(this.plugin.RequirePact(), this.plugin.PactDir, false);
             CompatWorld.Check(rc == 0, $"Writing the pact file failed ({rc})");
@@ -190,6 +217,14 @@ namespace PactNet.Compatibility.Tests.Steps
 
         private void StartMockServer(string transport)
         {
+            if (this.plugin.SyncContents != null)
+            {
+                this.plugin.Dsl("VerifyAsync(" + transport + ")");
+                this.plugin.SyncDsl = this.DefineSync(this.plugin.PactDir, transport);
+                this.plugin.MockServerPort = this.plugin.SyncDsl.StartAsync().GetAwaiter().GetResult();
+                return;
+            }
+
             this.plugin.Ffi("create_mock_server_for_transport");
             int port = NativeInterop.CreateMockServerForTransport(this.plugin.RequirePact(), "127.0.0.1", 0, transport, null);
             CompatWorld.Check(port > 0, $"Starting the {transport} mock server failed ({port}): {PluginFfi.LastError()}");
@@ -256,6 +291,20 @@ namespace PactNet.Compatibility.Tests.Steps
         /// <summary>Delegated from <see cref="HttpConsumerSteps"/> ("the pact test is done")</summary>
         internal void PactTestDone() => this.Run("pact test done", () =>
         {
+            if (this.plugin.SyncDsl != null)
+            {
+                var (matched, mismatches) = this.plugin.SyncDsl.FinishAsync().GetAwaiter().GetResult();
+                this.plugin.Matched = matched;
+                this.plugin.Mismatches = mismatches;
+                if (matched)
+                {
+                    this.plugin.ReadPactFile();
+                }
+
+                this.plugin.MockServerPort = null;
+                return;
+            }
+
             int port = this.RequireMockServer();
             this.plugin.Ffi("mock_server_matched");
             this.plugin.Matched = PluginFfi.MockServerMatched(port);
@@ -514,6 +563,22 @@ namespace PactNet.Compatibility.Tests.Steps
         public Task VerificationRun(string transport) => this.RunAsync("verification", async () =>
         {
             int port = this.plugin.ProviderPort ?? throw new InvalidOperationException("No provider has been started");
+            if (string.IsNullOrEmpty(transport) && this.plugin.PactFiles.Count == 1)
+            {
+                // PactVerifier only has HTTP and message endpoints, so plugin transports (grpc, matt) stay on the FFI
+                this.plugin.Dsl("PactVerifier");
+                (this.plugin.VerifyExitCode, this.plugin.VerifyOutput) =
+                    await Task.Run(() => PluginDsl.VerifyProvider(port, this.plugin.PactFiles[0]));
+                this.plugin.VerifyJson = null;
+                if (this.plugin.VerifyExitCode == 0)
+                {
+                    return;
+                }
+
+                // PactVerifier reports only pass/fail (no JSON results, and the outputters receive nothing on a
+                // mismatch), so a failed verification is re-run through the FFI verifier for the mismatch details
+            }
+
             this.plugin.Ffi("verifier");
             IntPtr handle = NativeInterop.VerifierNewForApplication("pact-net-compat", "0.0.0");
             try

@@ -54,6 +54,16 @@ namespace PactNet.Compatibility.Tests.Support
 
         internal JsonNode PactJson { get; set; }
 
+        // consumer side (DSL): synchronous plugin interactions are defined lazily, since the transport is only known
+        // when the mock server is started
+        internal bool SyncDefined { get; set; }
+
+        internal (string Plugin, string ContentType, string Contents)? SyncContents { get; set; }
+
+        internal PluginDsl SyncDsl { get; set; }
+
+        internal string PluginVersion(string name) => this.InstalledVersions.TryGetValue(name, out string v) ? v : null;
+
         // client results
         internal (int Status, byte[] Body)? HttpResponse { get; set; }
 
@@ -184,6 +194,12 @@ namespace PactNet.Compatibility.Tests.Support
             }
 
             this.Servers.Clear();
+
+            if (this.SyncDsl != null)
+            {
+                await this.SyncDsl.DisposeAsync();
+                this.SyncDsl = null;
+            }
 
             if (this.MockServerPort is int port)
             {

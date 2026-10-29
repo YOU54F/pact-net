@@ -1,4 +1,5 @@
 using PactNet.Drivers;
+using PactNet.Drivers.Http;
 using PactNet.Interop;
 
 namespace PactNet.Compatibility.Tests.Support
@@ -23,13 +24,16 @@ namespace PactNet.Compatibility.Tests.Support
         public IHttpInteractionDriver NewHttpInteraction(string description)
         {
             this.LastInteraction = NativeInterop.NewInteraction(this.pact, description);
-            return new HttpInteractionDriver(this.pact, this.LastInteraction);
+            return new HttpInteractionDriver(this.LastInteraction);
         }
 
-        public IMockServerDriver CreateMockServer(string host, int? port, bool tls)
-            => this.inner.CreateMockServer(host, port, tls);
+        public IMockServerDriver CreateMockServer(string host, int? port, bool tls, string transport = null)
+            => this.inner.CreateMockServer(host, port, tls, transport);
 
         public void WritePactFile(string directory)
             => this.inner.WritePactFile(directory);
+
+        public void WritePactFile(int port, string directory)
+            => this.inner.WritePactFile(port, directory);
     }
 }
