@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
@@ -18,7 +19,8 @@ namespace PactNet.Compatibility.Tests.Support
     internal sealed class PluginDsl : IAsyncDisposable
     {
         private readonly CapturedOutput output = new();
-        private ISynchronousPluginPactBuilderV4 builder;
+        private IPactBuilder builder;
+        private IDisposable owner;
         private TaskCompletionSource<int> started;
         private TaskCompletionSource done;
         private Task verify;
@@ -39,11 +41,47 @@ namespace PactNet.Compatibility.Tests.Support
                 LogLevel = PactLogLevel.Information
             };
 
-            dsl.builder = Pact.V4(PluginWorld.Consumer, PluginWorld.Provider, config)
-                              .WithSynchronousPluginInteractions(plugin, version, transport);
-            dsl.builder.UponReceiving(description).WithContent(contentType, Contents(contents));
+            ISynchronousPluginPactBuilderV4 builder = Pact.V4(PluginWorld.Consumer, PluginWorld.Provider, config)
+                                                          .WithSynchronousPluginInteractions(plugin, version, transport);
+            builder.UponReceiving(description).WithContent(contentType, Contents(contents));
+            dsl.builder = builder;
+            dsl.owner = builder;
             return dsl;
         }
+
+        /// <summary>Define HTTP plugin interactions (all for the same plugin) through the DSL</summary>
+        public static PluginDsl DefineHttp(string pactDir, string plugin, string version, IEnumerable<PluginWorld.HttpDef> defs)
+        {
+            var dsl = new PluginDsl();
+            IHttpPluginPactBuilderV4 builder = Pact.V4(PluginWorld.Consumer, PluginWorld.Provider, dsl.Config(pactDir))
+                                                   .WithHttpPluginInteractions(plugin, version);
+            dsl.builder = builder;
+            dsl.owner = builder;
+
+            foreach (PluginWorld.HttpDef def in defs)
+            {
+                IHttpPluginRequestBuilderV4 request = builder.UponReceiving(def.Description).WithRequest(new HttpMethod(def.Method), def.Path);
+                if (def.Request is var (_, reqType, reqContents))
+                {
+                    request = request.WithContent(reqType, Contents(reqContents));
+                }
+
+                IHttpPluginResponseBuilderV4 response = request.WillRespondWithStatus(200);
+                if (def.Response is var (_, resType, resContents))
+                {
+                    response.WithContent(resType, Contents(resContents));
+                }
+            }
+
+            return dsl;
+        }
+
+        private PactConfig Config(string pactDir) => new()
+        {
+            PactDir = pactDir,
+            Outputters = new IOutput[] { this.output },
+            LogLevel = PactLogLevel.Information
+        };
 
         /// <summary>Start the mock server (DSL Verify) and hold it open until <see cref="FinishAsync"/></summary>
         public async Task<int> StartAsync()
@@ -95,7 +133,7 @@ namespace PactNet.Compatibility.Tests.Support
                 }
             }
 
-            this.builder?.Dispose();
+            this.owner?.Dispose();
         }
 
         /// <summary>Verify an HTTP (or message-over-HTTP) provider with the PactNet verifier: (exit code, output)</summary>

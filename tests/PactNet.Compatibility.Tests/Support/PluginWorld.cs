@@ -60,7 +60,31 @@ namespace PactNet.Compatibility.Tests.Support
 
         internal (string Plugin, string ContentType, string Contents)? SyncContents { get; set; }
 
-        internal PluginDsl SyncDsl { get; set; }
+        /// <summary>The PactNet DSL mock server (synchronous or HTTP plugin interactions), when one is running</summary>
+        internal PluginDsl MockDsl { get; set; }
+
+        // consumer side: HTTP interactions are recorded and only built (DSL or FFI) when the pact is generated or the
+        // mock server started, since the DSL can only express some of them
+        internal List<HttpDef> HttpDefs { get; } = new();
+
+        internal HttpDef CurrentHttp => this.HttpDefs.Count > 0 ? this.HttpDefs[^1] : throw new InvalidOperationException("No HTTP interaction is being defined");
+
+        internal sealed class HttpDef
+        {
+            public string Description { get; init; }
+
+            public string Method { get; set; }
+
+            public string Path { get; set; }
+
+            public (string Plugin, string ContentType, string Contents)? Request { get; set; }
+
+            public (string Plugin, string ContentType, string Contents)? Response { get; set; }
+
+            public (string Body, string ContentType)? PlainResponse { get; set; }
+
+            public IEnumerable<string> Plugins => new[] { this.Request?.Plugin, this.Response?.Plugin }.Where(p => p != null);
+        }
 
         internal string PluginVersion(string name) => this.InstalledVersions.TryGetValue(name, out string v) ? v : null;
 
@@ -195,10 +219,10 @@ namespace PactNet.Compatibility.Tests.Support
 
             this.Servers.Clear();
 
-            if (this.SyncDsl != null)
+            if (this.MockDsl != null)
             {
-                await this.SyncDsl.DisposeAsync();
-                this.SyncDsl = null;
+                await this.MockDsl.DisposeAsync();
+                this.MockDsl = null;
             }
 
             if (this.MockServerPort is int port)

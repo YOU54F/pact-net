@@ -153,5 +153,23 @@ namespace PactNet
 
             return new SynchronousPluginPactBuilder(pluginDriver, pact.Config, port, host, transport);
         }
+
+        /// <summary>Create HTTP interactions with plugin-defined request or response contents.</summary>
+        /// <param name="pact">Pact details.</param>
+        /// <param name="pluginName">Content plugin name.</param>
+        /// <param name="pluginVersion">Optional plugin version.</param>
+        /// <param name="port">Optional mock server port.</param>
+        /// <param name="host">Mock server host.</param>
+        /// <returns>HTTP plugin builder.</returns>
+        public static IHttpPluginPactBuilderV4 WithHttpPluginInteractions(this IPactV4 pact,
+            string pluginName, string pluginVersion = null, int? port = null,
+            IPAddress host = IPAddress.Loopback)
+        {
+            pact.Config.LogLevel.LogToBuffer();
+            IPactDriver driver = new PactDriver();
+            IPluginPactDriver pluginDriver = driver.NewPluginPact(pact.Consumer, pact.Provider,
+                pluginName, pluginVersion, PactSpecification.V4);
+            return new HttpPluginPactBuilder(pluginDriver, pact.Config, port, host);
+        }
     }
 }

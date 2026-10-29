@@ -13,5 +13,6 @@ namespace PactNet.Drivers.Plugins
         /// <param name="description">Interaction description</param>
         /// <returns>Interaction driver</returns>
         IPluginInteractionDriver NewSyncInteraction(string description);
+        IHttpPluginInteractionDriver NewHttpPluginInteraction(string description);
     }
 }
