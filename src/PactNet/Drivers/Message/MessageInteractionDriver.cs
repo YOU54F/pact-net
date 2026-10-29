@@ -69,6 +69,7 @@ namespace PactNet.Drivers.Message
         {
             IntPtr pointer = NativeInterop.MessageReify(this.interaction);
             string body = Marshal.PtrToStringAnsi(pointer);
+            NativeInterop.FreeString(pointer);
             return body;
         }
     }

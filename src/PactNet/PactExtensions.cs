@@ -114,6 +114,22 @@ namespace PactNet
         }
 
         /// <summary>
+        /// Add synchronous (request/response) message (i.e. AsyncAPI request/reply) interactions to the pact
+        /// </summary>
+        /// <param name="pact">Pact details</param>
+        /// <returns>Pact builder</returns>
+        public static ISyncMessagePactBuilderV4 WithSynchronousMessageInteractions(this IPactV4 pact)
+        {
+            pact.Config.LogLevel.LogToBuffer();
+
+            IPactDriver driver = new PactDriver();
+            IMessagePactDriver messagePact = driver.NewMessagePact(pact.Consumer, pact.Provider, PactSpecification.V4);
+
+            var builder = new SyncMessagePactBuilder(messagePact, pact.Config, PactSpecification.V4);
+            return builder;
+        }
+
+        /// <summary>
         /// Establish a new pact with synchronous plugin interactions.
         /// </summary>
         /// <param name="pact"></param>
