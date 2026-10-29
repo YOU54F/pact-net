@@ -36,6 +36,21 @@
     </AssemblyAttribute>
   </ItemGroup>
 
+  <!-- V4 plugin features (pact-compatibility-suite feat/plugin-features): only when PACT_COMPAT_SUITE points at a checkout that has them -->
+  <ItemGroup Condition="'$(PACT_COMPAT_SUITE)' != '' And Exists('$(PACT_COMPAT_SUITE)/features/V4/plugins')">
+    <ReqnrollFeatureFiles Include="$(PACT_COMPAT_SUITE)/features/V4/plugins/*.feature">
+      <Link>features/V4/plugins/%(Filename)%(Extension)</Link>
+    </ReqnrollFeatureFiles>
+    <AssemblyAttribute Include="System.Reflection.AssemblyMetadataAttribute">
+      <_Parameter1>PluginSuiteDir</_Parameter1>
+      <_Parameter2>$(PACT_COMPAT_SUITE)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="Reqnroll.xUnit" Version="3.3.4" />
