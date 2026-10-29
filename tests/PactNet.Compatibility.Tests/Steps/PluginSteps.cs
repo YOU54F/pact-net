@@ -126,8 +126,8 @@ namespace PactNet.Compatibility.Tests.Steps
         [StepDefinition(@"^a message interaction is being defined for a consumer test$")]
         public void MessageInteraction() => this.Run("message interaction", () =>
         {
-            this.plugin.Ffi("new_message_interaction");
-            this.plugin.InteractionHandles.Add(NativeInterop.NewMessageInteraction(this.plugin.EnsurePact(), "plugin message 1"));
+            this.plugin.Dsl("WithAsynchronousPluginInteractions");
+            this.plugin.AsyncDefined = true;
         });
 
         [StepDefinition(@"^a synchronous message interaction is being defined for a consumer test$")]
@@ -164,6 +164,13 @@ namespace PactNet.Compatibility.Tests.Steps
             {
                 this.plugin.Dsl("WithContent");
                 this.plugin.SyncContents = (name, contentType, contents);
+                return;
+            }
+
+            if (this.plugin.AsyncDefined)
+            {
+                this.plugin.Dsl("WithContent");
+                this.plugin.AsyncContents = (name, contentType, contents);
                 return;
             }
 
@@ -244,6 +251,14 @@ namespace PactNet.Compatibility.Tests.Steps
                 this.plugin.Ffi("new_sync_message_interaction");
                 this.plugin.InteractionHandles.Add(PluginFfi.NewSyncMessageInteraction(this.plugin.EnsurePact(), SyncDescription));
                 this.SetPluginContents(name, InteractionPart.Request, contentType, contents);
+            }
+
+            if (this.plugin.AsyncContents is var (asyncName, asyncType, asyncContents))
+            {
+                this.plugin.Dsl("Verify");
+                PluginDsl.WriteAsyncMessage(this.plugin.PactDir, asyncName, this.plugin.PluginVersion(asyncName), "plugin message 1", asyncType, asyncContents);
+                this.plugin.ReadPactFile();
+                return;
             }
 
             // the DSL only writes a pact through a passing mock server test
@@ -529,6 +544,16 @@ namespace PactNet.Compatibility.Tests.Steps
 
         private void WriteMessagePactFile(string description, bool sync, TableRow row, string transport)
         {
+            if (!sync)
+            {
+                string dir = Path.Combine(this.plugin.PactDir, "provider-" + this.plugin.PactFiles.Count);
+                string name = row["plugin"];
+                this.plugin.Dsl("WithAsynchronousPluginInteractions");
+                PluginDsl.WriteAsyncMessage(dir, name, this.plugin.PluginVersion(name), description, row["content type"], row["contents"]);
+                this.plugin.PactFiles.Add(Path.Combine(dir, $"{PluginWorld.Consumer}-{PluginWorld.Provider}.json"));
+                return;
+            }
+
             string file = this.WritePactFile(row["plugin"], pact =>
             {
                 InteractionHandle i;

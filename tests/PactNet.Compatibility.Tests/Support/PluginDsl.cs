@@ -76,6 +76,21 @@ namespace PactNet.Compatibility.Tests.Support
             return dsl;
         }
 
+        /// <summary>
+        /// Write an asynchronous plugin message pact through the DSL (<c>WithAsynchronousPluginInteractions</c>): the
+        /// message is reified, handed to a no-op consumer, and the pact written on success
+        /// </summary>
+        public static void WriteAsyncMessage(string pactDir, string plugin, string version, string description,
+                                             string contentType, string contents)
+        {
+            var dsl = new PluginDsl();
+            using IAsynchronousPluginPactBuilderV4 builder = Pact.V4(PluginWorld.Consumer, PluginWorld.Provider, dsl.Config(pactDir))
+                                                                 .WithAsynchronousPluginInteractions(plugin, version);
+            builder.ExpectsToReceive(description)
+                   .WithContent(contentType, Contents(contents))
+                   .Verify(_ => { });
+        }
+
         private PactConfig Config(string pactDir) => new()
         {
             PactDir = pactDir,

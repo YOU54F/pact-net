@@ -63,6 +63,11 @@ namespace PactNet.Compatibility.Tests.Support
         /// <summary>The PactNet DSL mock server (synchronous or HTTP plugin interactions), when one is running</summary>
         internal PluginDsl MockDsl { get; set; }
 
+        // consumer side (DSL): asynchronous plugin messages are written by WithAsynchronousPluginInteractions
+        internal bool AsyncDefined { get; set; }
+
+        internal (string Plugin, string ContentType, string Contents)? AsyncContents { get; set; }
+
         // consumer side: HTTP interactions are recorded and only built (DSL or FFI) when the pact is generated or the
         // mock server started, since the DSL can only express some of them
         internal List<HttpDef> HttpDefs { get; } = new();
