@@ -73,12 +73,16 @@ namespace PactNet
         /// Verify the configured interactions
         /// </summary>
         /// <param name="interact">Action to perform the real interactions against the mock driver</param>
-        /// <exception cref="PactFailureException">Failed to verify the interactions</exception>
+        /// <exception cref="PactMockServerMismatchException">Failed to verify the interactions</exception>
         public void Verify(Action<IConsumerContext> interact)
         {
             Guard.NotNull(interact, nameof(interact));
 
             using IMockServerDriver mockServer = this.StartMockServer();
+
+            // reading the logs drains the FFI buffer, so read them at most once
+            string logs = null;
+            string ReadLogs() => logs ??= mockServer.MockServerLogs();
 
             try
             {
@@ -87,11 +91,11 @@ namespace PactNet
                     MockServerUri = mockServer.Uri
                 });
 
-                this.VerifyInternal(mockServer);
+                this.VerifyInternal(mockServer, ReadLogs);
             }
             finally
             {
-                this.PrintLogs(mockServer);
+                this.PrintLogs(ReadLogs());
             }
         }
 
@@ -99,12 +103,16 @@ namespace PactNet
         /// Verify the configured interactions
         /// </summary>
         /// <param name="interact">Action to perform the real interactions against the mock driver</param>
-        /// <exception cref="PactFailureException">Failed to verify the interactions</exception>
+        /// <exception cref="PactMockServerMismatchException">Failed to verify the interactions</exception>
         public async Task VerifyAsync(Func<IConsumerContext, Task> interact)
         {
             Guard.NotNull(interact, nameof(interact));
 
             using IMockServerDriver mockServer = this.StartMockServer();
+
+            // reading the logs drains the FFI buffer, so read them at most once
+            string logs = null;
+            string ReadLogs() => logs ??= mockServer.MockServerLogs();
 
             try
             {
@@ -113,11 +121,11 @@ namespace PactNet
                     MockServerUri = mockServer.Uri
                 });
 
-                this.VerifyInternal(mockServer);
+                this.VerifyInternal(mockServer, ReadLogs);
             }
             finally
             {
-                this.PrintLogs(mockServer);
+                this.PrintLogs(ReadLogs());
             }
         }
 
@@ -142,7 +150,8 @@ namespace PactNet
         /// Verify the interactions after the consumer client has been invoked
         /// </summary>
         /// <param name="mockServer">Mock server</param>
-        private void VerifyInternal(IMockServerDriver mockServer)
+        /// <param name="readLogs">Reads the mock server logs</param>
+        private void VerifyInternal(IMockServerDriver mockServer, Func<string> readLogs)
         {
             string errors = mockServer.MockServerMismatches();
 
@@ -157,17 +166,17 @@ namespace PactNet
             this.config.WriteLine(string.Empty);
             this.config.WriteLine(errors);
 
-            throw new PactFailureException("Pact verification failed. See output for details");
+            throw new PactMockServerMismatchException("Pact verification failed. See output for details",
+                                                      errors,
+                                                      readLogs());
         }
 
         /// <summary>
         /// Print logs to the configured outputs
         /// </summary>
-        /// <param name="mockServer">Mock server</param>
-        private void PrintLogs(IMockServerDriver mockServer)
+        /// <param name="logs">Mock server logs</param>
+        private void PrintLogs(string logs)
         {
-            string logs = mockServer.MockServerLogs();
-
             this.config.WriteLine("Mock driver logs:");
             this.config.WriteLine(string.Empty);
             this.config.WriteLine(logs);

@@ -1,5 +1,7 @@
+using System;
 using System.Net;
 using System.Text.Json;
+using FluentAssertions;
 using Moq;
 using PactNet.Drivers;
 using Xunit;
@@ -84,6 +86,58 @@ namespace PactNet.Tests
             this.mockDriver.Verify(s => s.WithResponseHeader("name", "value1", 0));
             this.mockDriver.Verify(s => s.WithResponseHeader("name", "value2", 1));
             this.mockDriver.Verify(s => s.WithResponseHeader("other", "value", 0));
+        }
+
+        [Fact]
+        public void WithHeader_MultipleStringValues_SetsIndexPerValue()
+        {
+            this.builder.WithHeader("name", "value1", "value2", "value3");
+
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", "value1", 0));
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", "value2", 1));
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", "value3", 2));
+        }
+
+        [Fact]
+        public void WithHeader_MultipleStringValuesAfterSingleValue_ContinuesIndex()
+        {
+            this.builder.WithHeader("name", "value1");
+            this.builder.WithHeader("NAME", "value2", "value3");
+            this.builder.WithHeader("other", "value", "value");
+
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", "value1", 0));
+            this.mockDriver.Verify(s => s.WithResponseHeader("NAME", "value2", 1));
+            this.mockDriver.Verify(s => s.WithResponseHeader("NAME", "value3", 2));
+            this.mockDriver.Verify(s => s.WithResponseHeader("other", "value", 0));
+            this.mockDriver.Verify(s => s.WithResponseHeader("other", "value", 1));
+        }
+
+        [Fact]
+        public void WithHeader_MultipleMatchers_SetsSerialisedValuePerIndex()
+        {
+            var expectedValue1 = "{\"pact:matcher:type\":\"regex\",\"value\":\"value1\",\"regex\":\"^value[0-9]$\"}";
+            var expectedValue2 = "{\"pact:matcher:type\":\"type\",\"value\":\"value2\"}";
+
+            this.builder.WithHeader("name", Match.Regex("value1", "^value[0-9]$"), Match.Type("value2"));
+
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", expectedValue1, 0));
+            this.mockDriver.Verify(s => s.WithResponseHeader("name", expectedValue2, 1));
+        }
+
+        [Fact]
+        public void WithHeader_NullValues_ThrowsArgumentException()
+        {
+            Action action = () => this.builder.WithHeader("name", (string[])null);
+
+            action.Should().Throw<ArgumentException>();
+        }
+
+        [Fact]
+        public void WithHeader_NullMatchers_ThrowsArgumentException()
+        {
+            Action action = () => this.builder.WithHeader("name", (Matchers.IMatcher[])null);
+
+            action.Should().Throw<ArgumentException>();
         }
 
         [Fact]
