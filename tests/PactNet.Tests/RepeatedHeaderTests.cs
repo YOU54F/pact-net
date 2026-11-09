@@ -145,10 +145,12 @@ namespace PactNet.Tests
         }
 
         [Fact]
-        public async Task H6b_QuotedValueContainingComma_MatchesAndWarns()
+        public async Task H6b_QuotedValueWhitespaceIsLiteral_DoesNotMatch()
         {
             IPactBuilderV3 builder = this.NewBuilder("H6b");
 
+            // quoted-string content is literal (RFC 9110 §5.6.4), so the whitespace before the comma
+            // inside the quotes is significant and "x , y" does not match "x, y"
             builder.UponReceiving("a request with a quoted X-Request value containing a comma")
                    .WithRequest(HttpMethod.Get, "/headers")
                    .WithHeader("X-Request", "\"x , y\"")
@@ -156,9 +158,20 @@ namespace PactNet.Tests
                    .WillRespond()
                    .WithStatus(HttpStatusCode.OK);
 
-            await this.ShouldMatchAsync(builder, "X-Request: \"x, y\"", "X-Request: z");
+            HttpStatusCode? status = null;
 
-            this.captured.Logs.Should().Contain("WARN").And.Contain("RFC 9110 §5.3");
+            Func<Task> verify = () => builder.VerifyAsync(async ctx =>
+            {
+                status = await SendRawAsync(ctx.MockServerUri, "X-Request: \"x, y\"", "X-Request: z");
+            });
+
+            var exception = await verify.Should().ThrowAsync<PactMockServerMismatchException>();
+            this.DumpOutput();
+
+            status.Should().NotBe(HttpStatusCode.OK);
+            this.captured.Mismatches.Should().NotBeNullOrWhiteSpace().And.NotBe("[]");
+            exception.Which.Mismatches.Should().ContainEquivalentOf("x-request");
+            this.captured.Logs.Should().NotContain("RFC 9110");
         }
 
         [Fact]
