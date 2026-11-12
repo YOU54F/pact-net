@@ -10,15 +10,18 @@
 
   <Import Project="../NuGet.targets" />
 
+  <!--
+    The native libraries are packed under runtimes/<rid>/native, so package consumers get the right one selected by the
+    .NET host at run time (including linux-musl-* on Alpine) with no detection needed here.
+
+    Project references don't flow runtimes/ assets though, so for builds inside this repo the library matching the
+    machine running the build is copied to the output directory. The SDK already knows its own portable RID, which
+    distinguishes glibc (linux-x64) from musl (linux-musl-x64).
+  -->
   <PropertyGroup>
-    <IsWindows>False</IsWindows>
-    <IsLinux>False</IsLinux>
-    <IsOSX>False</IsOSX>
-    <IsArm64>False</IsArm64>
-    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'True'">True</IsWindows>
-    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'True'">True</IsLinux>
-    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'True'">True</IsOSX>
-    <IsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture)' == 'Arm64'">True</IsArm64>
+    <PactNetHostRid>$(NETCoreSdkPortableRuntimeIdentifier)</PactNetHostRid>
+    <PactNetHostRid Condition="'$(PactNetHostRid)' == ''">$(NETCoreSdkRuntimeIdentifier)</PactNetHostRid>
+    <PactNetHostRid Condition="'$(PactNetHostRid)' == ''">$([System.Runtime.InteropServices.RuntimeInformation]::RuntimeIdentifier)</PactNetHostRid>
   </PropertyGroup>
 
   <ItemGroup>
@@ -26,35 +29,49 @@
       <Link>pact_ffi.dll</Link>
       <PackagePath>runtimes/win-x64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsWindows)'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="$(PactNetHostRid.StartsWith('win-'))">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\x86_64\libpact_ffi.so">
       <Link>libpact_ffi.so</Link>
       <PackagePath>runtimes/linux-x64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsLinux)' And '$(IsArm64)' == 'False'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'linux-x64'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\aarch64\libpact_ffi.so">
       <Link>libpact_ffi.so</Link>
       <PackagePath>runtimes/linux-arm64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsLinux)' And '$(IsArm64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'linux-arm64'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\x86_64-musl\libpact_ffi.so">
+      <Link>libpact_ffi.so</Link>
+      <PackagePath>runtimes/linux-musl-x64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'linux-musl-x64'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\aarch64-musl\libpact_ffi.so">
+      <Link>libpact_ffi.so</Link>
+      <PackagePath>runtimes/linux-musl-arm64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'linux-musl-arm64'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\macos\x86_64\libpact_ffi.dylib">
       <Link>libpact_ffi.dylib</Link>
       <PackagePath>runtimes/osx-x64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsOSX)' == 'True' And '$(IsArm64)' == 'False'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'osx-x64'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\macos\aarch64\libpact_ffi.dylib">
       <Link>libpact_ffi.dylib</Link>
       <PackagePath>runtimes/osx-arm64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="'$(IsOSX)' == 'True' And '$(IsArm64)' == 'True'">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'osx-arm64'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
   </ItemGroup>
