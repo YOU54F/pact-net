@@ -46,23 +46,8 @@ download_native() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         shasum -a 256 --check --quiet "$src_sha"
     else
-        if [[ "$OSTYPE" == "linux"* ]]; then
-            if ldd /bin/ls >/dev/null 2>&1; then
-                ldd_output=$(ldd /bin/ls)
-                case "$ldd_output" in
-                    *musl*) 
-                        sha256sum -c -s "$src_sha"
-                        ;;
-                    *) 
-                        sha256sum --check --quiet "$src_sha"
-                        ;;
-                esac
-            else
-                sha256sum --check --quiet "$src_sha"  
-            fi
-        else
-            sha256sum --check --quiet "$src_sha"
-        fi
+        # plain -c works with both GNU coreutils and BusyBox (Alpine) sha256sum
+        sha256sum -c "$src_sha" > /dev/null
     fi
 
     echo -e "${GREEN}OK${CLEAR}"
