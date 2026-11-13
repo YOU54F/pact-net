@@ -29,7 +29,14 @@
       <Link>pact_ffi.dll</Link>
       <PackagePath>runtimes/win-x64/native</PackagePath>
       <Pack>true</Pack>
-      <CopyToOutputDirectory Condition="$(PactNetHostRid.StartsWith('win-'))">PreserveNewest</CopyToOutputDirectory>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'win-x64' Or '$(PactNetHostRid)' == 'win-x86'">PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+    <Content Include="$(MSBuildProjectDirectory)\..\..\build\windows\aarch64\pact_ffi.dll">
+      <Link>pact_ffi.dll</Link>
+      <PackagePath>runtimes/win-arm64/native</PackagePath>
+      <Pack>true</Pack>
+      <CopyToOutputDirectory Condition="'$(PactNetHostRid)' == 'win-arm64'">PreserveNewest</CopyToOutputDirectory>
       <Visible>false</Visible>
     </Content>
     <Content Include="$(MSBuildProjectDirectory)\..\..\build\linux\x86_64\libpact_ffi.so">

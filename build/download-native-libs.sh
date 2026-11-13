@@ -80,6 +80,7 @@ extract_zip() {
 }
 
 download_native "windows" "x86_64" "x86_64-pc-windows-msvc" "zip" "pact_ffi.dll"
+download_native "windows" "aarch64" "aarch64-pc-windows-msvc" "zip" "pact_ffi.dll"
 download_native "linux" "x86_64" "x86_64-unknown-linux-gnu" "tar.xz" "libpact_ffi.so"
 download_native "linux" "aarch64" "aarch64-unknown-linux-gnu" "tar.xz" "libpact_ffi.so"
 download_native "macos" "x86_64" "x86_64-apple-darwin" "tar.xz" "libpact_ffi.dylib"
