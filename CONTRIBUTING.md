@@ -75,6 +75,8 @@ build/
         x86_64/
             libpact_ffi.dylib
     windows/
+        aarch64/
+            pact_ffi.dll
         x86_64/
             pact_ffi.dll
 ```

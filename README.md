@@ -236,6 +236,7 @@ Due to using a shared native library instead of C# for the main Pact logic only 
 | ------------ | ------------ | -------------------------------------------------------------------|
 | Windows      | x86          | ❌ No                                                              |
 | Windows      | x64          | ✔️ Yes                                                             |
+| Windows      | ARM64        | ✔️ Yes                                                              |
 | Linux (libc) | ARM64        | ✔️ Yes                                                              |
 | Linux (libc) | x64          | ✔️ Yes                                                             |
 | Linux (libc) | x86          | ❌ No                                                              |
