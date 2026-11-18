@@ -46,7 +46,8 @@ download_native() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         shasum -a 256 --check --quiet "$src_sha"
     else
-        sha256sum --check --quiet "$src_sha"
+        # plain -c works with both GNU coreutils and BusyBox (Alpine) sha256sum
+        sha256sum -c "$src_sha" > /dev/null
     fi
 
     echo -e "${GREEN}OK${CLEAR}"
@@ -67,5 +68,7 @@ download_native "libpact_ffi" "linux" "x86_64" "so"
 download_native "libpact_ffi" "linux" "aarch64" "so"
 download_native "libpact_ffi" "macos" "x86_64" "dylib"
 download_native "libpact_ffi" "macos" "aarch64" "dylib"
+download_native "libpact_ffi" "linux" "x86_64-musl" "so"
+download_native "libpact_ffi" "linux" "aarch64-musl" "so"
 
 echo "Successfully downloaded FFI libraries"
