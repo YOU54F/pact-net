@@ -74,9 +74,9 @@ namespace PactNet.Verifier.Messaging
                     this.server.Prefixes.Add(uri.AbsoluteUri);
                     this.server.Start();
                 }
-                catch (HttpListenerException e) when (e.Message == "Address already in use")
+                catch (HttpListenerException e) when (IsAddressInUse(e))
                 {
-                    // handle intermittent race condition, mostly on MacOS, where a port says it's unused but still throws when you try to use it
+                    // handle intermittent race condition, where a port says it's unused but still throws when you try to use it
                     this.config.WriteLine("Failed to start messaging provider as the port is already in use, retrying...");
                     continue;
                 }
@@ -88,6 +88,27 @@ namespace PactNet.Verifier.Messaging
                 this.thread.Start();
                 return uri;
             }
+        }
+
+        /// <summary>
+        /// Check if the listener failed to start because the port is already bound
+        /// </summary>
+        /// <remarks>
+        /// The error code is the platform errno for EADDRINUSE. The message text differs by libc
+        /// (glibc: "Address already in use", musl: "Address in use"), so it is only a fallback.
+        /// </remarks>
+        /// <param name="e">Listener exception</param>
+        /// <returns>Port was already in use</returns>
+        private static bool IsAddressInUse(HttpListenerException e)
+        {
+            const int LinuxAddressInUse = 98;
+            const int MacAddressInUse = 48;
+            const int WindowsSocketAddressInUse = 10048;
+
+            return e.ErrorCode == LinuxAddressInUse
+                || e.ErrorCode == MacAddressInUse
+                || e.ErrorCode == WindowsSocketAddressInUse
+                || e.Message.IndexOf("in use", StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         /// <summary>
