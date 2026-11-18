@@ -102,7 +102,7 @@ jobs:
           if [[ ${{ matrix.distro }} == *"alpine"* ]]; then
             echo "deps=apk add --no-cache curl bash gzip && " >> "$GITHUB_OUTPUT"
           else
-            echo "deps=" >> "$GITHUB_OUTPUT"
+            echo "deps=apt-get update && apt-get install -y --no-install-recommends unzip xz-utils && " >> "$GITHUB_OUTPUT"
           fi
   
       - name: Restore, Build & Test
