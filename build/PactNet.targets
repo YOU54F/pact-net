@@ -1,7 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <!-- This file supports .Net Framework, which doesn't automatically unpack the runtimes folder -->
-  <ItemGroup>
+  <!--
+    This file supports .Net Framework, which doesn't automatically unpack the runtimes folder.
+
+    The ARM64 library is used when the consuming project targets ARM64 explicitly, otherwise the x64 library is used
+    (which also runs under x64 emulation on Windows on ARM).
+  -->
+  <ItemGroup Condition="'$(PlatformTarget)' == 'ARM64'">
+    <Content Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-arm64\native\pact_ffi.dll">
+      <Link>pact_ffi.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>false</Visible>
+    </Content>
+  </ItemGroup>
+  <ItemGroup Condition="'$(PlatformTarget)' != 'ARM64'">
     <Content Include="$(MSBuildThisFileDirectory)..\..\runtimes\win-x64\native\pact_ffi.dll">
       <Link>pact_ffi.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
