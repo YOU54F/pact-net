@@ -74,8 +74,11 @@ extract_zip() {
         unzip -q -o "$1" -d "$2"
     elif command -v 7z > /dev/null; then
         7z x -y -o"$2" "$1" > /dev/null
-    else
+    elif tar --version 2>/dev/null | grep -q bsdtar; then
         tar -xf "$1" -C "$2"
+    else
+        echo "error: unzip (or 7z/bsdtar) is required to extract $1" >&2
+        exit 1
     fi
 }
 
