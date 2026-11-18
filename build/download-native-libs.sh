@@ -45,7 +45,9 @@ download_native() {
     if [[ "$OSTYPE" == "darwin"* ]]; then
         sed '/^$/d' "$src_sha" | shasum -a 256 --check --quiet -
     else
-        sed '/^$/d' "$src_sha" | sha256sum --check --quiet -
+        # GNU coreutils and BusyBox (Alpine) both accept plain -c on a file
+        sed -i '/^$/d' "$src_sha"
+        sha256sum -c "$src_sha" > /dev/null
     fi
 
     echo -e "${GREEN}OK${CLEAR}"
@@ -82,5 +84,7 @@ download_native "linux" "x86_64" "x86_64-unknown-linux-gnu" "tar.xz" "libpact_ff
 download_native "linux" "aarch64" "aarch64-unknown-linux-gnu" "tar.xz" "libpact_ffi.so"
 download_native "macos" "x86_64" "x86_64-apple-darwin" "tar.xz" "libpact_ffi.dylib"
 download_native "macos" "aarch64" "aarch64-apple-darwin" "tar.xz" "libpact_ffi.dylib"
+download_native "linux" "x86_64-musl" "x86_64-unknown-linux-musl" "tar.xz" "libpact_ffi.so"
+download_native "linux" "aarch64-musl" "aarch64-unknown-linux-musl" "tar.xz" "libpact_ffi.so"
 
 echo "Successfully downloaded FFI libraries"
