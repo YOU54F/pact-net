@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using PactNet.Interop;
 
-namespace PactNet.Drivers
+namespace PactNet.Drivers.Message
 {
     /// <summary>
     /// Driver for asynchronous message interactions
@@ -68,8 +68,14 @@ namespace PactNet.Drivers
         public string Reify()
         {
             IntPtr pointer = NativeInterop.MessageReify(this.interaction);
-            string body = Marshal.PtrToStringAnsi(pointer);
-            return body;
+            try
+            {
+                return Marshal.PtrToStringAnsi(pointer);
+            }
+            finally
+            {
+                NativeInterop.FreeString(pointer);
+            }
         }
     }
 }
