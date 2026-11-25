@@ -1,0 +1,11 @@
+{
+	admin off
+}
+
+:9292 {
+	log {
+		output stdout
+		format json
+	}
+	reverse_proxy broker:9292
+}

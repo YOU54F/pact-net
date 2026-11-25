@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!--
+    Standalone repro - deliberately NOT part of PactNet.sln.
+
+    By default this uses the published PactNet 5.0.1 NuGet package (libpact_ffi 0.4.27),
+    which is what the forum user is on. To run against a local PactNet checkout instead
+    (e.g. pact-net#569 which bumps to libpact_ffi 0.5.13):
+
+      dotnet test -p:PactNetProject=/path/to/pact-net/src/PactNet/PactNet.csproj
+  -->
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == ''">net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PactNetVersion Condition="'$(PactNetVersion)' == ''">5.0.1</PactNetVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.9.0" />
+    <PackageReference Include="xunit" Version="2.6.6" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.5.6">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PactNetProject)' == ''">
+    <PackageReference Include="PactNet" Version="$(PactNetVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(PactNetProject)' != ''">
+    <ProjectReference Include="$(PactNetProject)" />
+  </ItemGroup>
+</Project>

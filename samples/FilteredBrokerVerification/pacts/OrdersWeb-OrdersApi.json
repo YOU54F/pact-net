@@ -1,0 +1,33 @@
+{
+  "consumer": { "name": "OrdersWeb" },
+  "provider": { "name": "OrdersApi" },
+  "interactions": [
+    {
+      "description": "a request for order 1",
+      "providerStates": [{ "name": "order 1 exists" }],
+      "request": { "method": "GET", "path": "/orders/1" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "id": 1, "status": "Pending" }
+      }
+    },
+    {
+      "description": "a request for order 2",
+      "providerStates": [{ "name": "order 2 exists" }],
+      "request": { "method": "GET", "path": "/orders/2" },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "application/json" },
+        "body": { "id": 2, "status": "Fulfilling" }
+      }
+    },
+    {
+      "description": "a request for a missing order",
+      "providerStates": [{ "name": "no orders exist" }],
+      "request": { "method": "GET", "path": "/orders/404" },
+      "response": { "status": 404 }
+    }
+  ],
+  "metadata": { "pactSpecification": { "version": "3.0.0" } }
+}
